@@ -9,95 +9,69 @@ struct FoodAnalysisResultView: View {
     @State private var showingSaveConfirmation = false
     @State private var customPortionSize: String = ""
     @State private var notes: String = ""
+    @State private var selectedMealType: MealType = .breakfast
     
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 24) {
-                    // Header con imagen y resultado
-                    VStack(spacing: 16) {
-                        Image(uiImage: originalImage)
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: 200, height: 200)
-                            .clipShape(RoundedRectangle(cornerRadius: 20))
-                            .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
-                        
-                        VStack(spacing: 8) {
-                            Text(result.foodName)
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .foregroundColor(.primary)
-                            
-                            HStack(spacing: 8) {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(confidenceColor)
-                                
-                                Text("Confianza: \(Int(result.confidence * 100))%")
-                                    .font(.subheadline)
-                                    .foregroundColor(confidenceColor)
-                            }
-                        }
-                    }
+                    // Header con resultado de IA
+                    AIResultHeader(result: result, originalImage: originalImage)
                     
-                    // Información nutricional
-                    NutritionalInfoCard(nutritionalInfo: result.nutritionalInfo)
+                    // Información nutricional detallada
+                    NutritionalAnalysisCard(nutritionalInfo: result.nutritionalInfo)
                     
-                    // Insights de salud
+                    // Insights específicos para diabetes
                     if !result.healthInsights.isEmpty {
-                        HealthInsightsCard(insights: result.healthInsights)
+                        DiabetesInsightsCard(insights: result.healthInsights)
                     }
                     
-                    // Impacto en glucosa
-                    GlucoseImpactCard(nutritionalInfo: result.nutritionalInfo)
+                    // Impacto glucémico con visualización
+                    GlucoseImpactVisualizationCard(nutritionalInfo: result.nutritionalInfo)
                     
-                    // Sección para guardar
-                    SaveMealCard(
+                    // Sección para guardar en el historial
+                    SaveToHistoryCard(
                         foodName: result.foodName,
+                        selectedMealType: $selectedMealType,
                         portionSize: $customPortionSize,
                         notes: $notes,
-                        onSave: saveMeal
+                        onSave: saveMealToHistory
                     )
                 }
                 .padding()
             }
-            .navigationTitle("Análisis Completo")
+            .navigationTitle("Análisis IA")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cerrar") {
                         onDismiss()
                     }
+                    .foregroundColor(.blue)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Compartir") {
                         shareResults()
                     }
+                    .foregroundColor(.blue)
                 }
             }
-            .alert("Comida Guardada", isPresented: $showingSaveConfirmation) {
-                Button("OK") {
+            .alert("¡Guardado Exitosamente!", isPresented: $showingSaveConfirmation) {
+                Button("Ver Historial") {
+                    onDismiss()
+                    // Aquí podrías navegar a la tab de historial
+                }
+                Button("Analizar Otra") {
                     onDismiss()
                 }
             } message: {
-                Text("La información nutricional ha sido agregada a tu registro de comidas.")
+                Text("El análisis nutricional ha sido agregado a tu historial de comidas con todos los insights de IA.")
             }
         }
     }
     
-    private var confidenceColor: Color {
-        switch result.confidence {
-        case 0.8...1.0:
-            return .green
-        case 0.6..<0.8:
-            return .orange
-        default:
-            return .red
-        }
-    }
-    
-    private func saveMeal() {
+    private func saveMealToHistory() {
         let portionSize = Double(customPortionSize) ?? result.nutritionalInfo.portionSize
         let adjustedNutrition = adjustNutritionForPortion(
             original: result.nutritionalInfo,
@@ -105,9 +79,9 @@ struct FoodAnalysisResultView: View {
         )
         
         let meal = Meal(
-            name: result.foodName,
-            type: getCurrentMealType(),
-            portions: ["Análisis automático: \(Int(portionSize))g"],
+            name: "🧠 \(result.foodName)",  // Emoji para indicar análisis IA
+            type: selectedMealType,
+            portions: ["Análisis IA: \(Int(portionSize))g"],
             timestamp: Date(),
             glucoseReadingBefore: nil,
             glucoseReadingAfter: nil,
@@ -136,35 +110,24 @@ struct FoodAnalysisResultView: View {
         )
     }
     
-    private func getCurrentMealType() -> MealType {
-        let hour = Calendar.current.component(.hour, from: Date())
-        
-        switch hour {
-        case 5...11:
-            return .breakfast
-        case 12...16:
-            return .lunch
-        case 17...22:
-            return .dinner
-        default:
-            return .snack
-        }
-    }
-    
     private func shareResults() {
-        // Implementar compartir resultados
         let shareText = """
-        🍎 Análisis Nutricional: \(result.foodName)
+        🧠 Análisis Nutricional con IA: \(result.foodName)
         
         📊 Información por \(Int(result.nutritionalInfo.portionSize))g:
         • Calorías: \(Int(result.nutritionalInfo.calories))
         • Carbohidratos: \(Int(result.nutritionalInfo.carbohydrates))g
         • Proteínas: \(Int(result.nutritionalInfo.proteins))g
         • Grasas: \(Int(result.nutritionalInfo.fats))g
+        • Fibra: \(Int(result.nutritionalInfo.fiber))g
         
-        🩸 Impacto en Glucosa: \(result.nutritionalInfo.carbsPerGlucoseImpact)
+        🩸 Índice Glucémico: \(result.nutritionalInfo.glycemicIndex.rawValue.capitalized)
+        📈 Carga Glucémica: \(String(format: "%.1f", result.nutritionalInfo.glycemicLoad))
+        🎯 Impacto: \(result.nutritionalInfo.carbsPerGlucoseImpact)
         
-        Generado por Control de Glucosa App
+        🤖 Confianza IA: \(Int(result.confidence * 100))%
+        
+        Generado por Control de Glucosa App con MobileNetV2
         """
         
         let activityViewController = UIActivityViewController(
@@ -179,9 +142,114 @@ struct FoodAnalysisResultView: View {
     }
 }
 
-// MARK: - Cards de información
+// MARK: - Header con resultado de IA
 
-struct NutritionalInfoCard: View {
+struct AIResultHeader: View {
+    let result: FoodAnalysisResult
+    let originalImage: UIImage
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            // Imagen analizada
+            Image(uiImage: originalImage)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: 200, height: 200)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
+                .overlay(
+                    // Badge de IA
+                    VStack {
+                        HStack {
+                            Spacer()
+                            AIBadge()
+                        }
+                        Spacer()
+                    }
+                    .padding(12)
+                )
+            
+            // Resultado de la clasificación
+            VStack(spacing: 12) {
+                Text(result.foodName)
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(.primary)
+                    .multilineTextAlignment(.center)
+                
+                // Confianza de la IA con indicador visual
+                HStack(spacing: 12) {
+                    Image(systemName: "brain")
+                        .foregroundColor(confidenceColor)
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Confianza de la IA: \(Int(result.confidence * 100))%")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundColor(confidenceColor)
+                        
+                        Text(confidenceDescription)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    Spacer()
+                    
+                    // Barra de confianza
+                    ProgressView(value: result.confidence, total: 1.0)
+                        .progressViewStyle(LinearProgressViewStyle(tint: confidenceColor))
+                        .frame(width: 60)
+                }
+                .padding()
+                .background(confidenceColor.opacity(0.1))
+                .cornerRadius(12)
+            }
+        }
+    }
+    
+    private var confidenceColor: Color {
+        switch result.confidence {
+        case 0.85...1.0:
+            return .green
+        case 0.7..<0.85:
+            return .orange
+        default:
+            return .red
+        }
+    }
+    
+    private var confidenceDescription: String {
+        switch result.confidence {
+        case 0.85...1.0:
+            return "Muy alta precisión"
+        case 0.7..<0.85:
+            return "Buena precisión"
+        default:
+            return "Verificar manualmente"
+        }
+    }
+}
+
+struct AIBadge: View {
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "brain.head.profile")
+                .font(.caption2)
+            Text("IA")
+                .font(.caption2)
+                .fontWeight(.bold)
+        }
+        .foregroundColor(.white)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(Color.blue)
+        .cornerRadius(8)
+    }
+}
+
+// MARK: - Card de análisis nutricional
+
+struct NutritionalAnalysisCard: View {
     let nutritionalInfo: NutritionalInfo
     
     var body: some View {
@@ -189,11 +257,11 @@ struct NutritionalInfoCard: View {
             HStack {
                 Image(systemName: "chart.bar.fill")
                     .foregroundColor(.blue)
-                Text("Información Nutricional")
+                Text("Análisis Nutricional Detallado")
                     .font(.headline)
                     .fontWeight(.semibold)
                 Spacer()
-                Text("\(Int(nutritionalInfo.portionSize))g")
+                Text("por \(Int(nutritionalInfo.portionSize))g")
                     .font(.caption)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
@@ -204,13 +272,49 @@ struct NutritionalInfoCard: View {
             LazyVGrid(columns: [
                 GridItem(.flexible()),
                 GridItem(.flexible())
-            ], spacing: 12) {
-                NutrientItem(name: "Calorías", value: "\(Int(nutritionalInfo.calories))", unit: "kcal", color: .red)
-                NutrientItem(name: "Carbohidratos", value: "\(Int(nutritionalInfo.carbohydrates))", unit: "g", color: .orange)
-                NutrientItem(name: "Proteínas", value: "\(Int(nutritionalInfo.proteins))", unit: "g", color: .green)
-                NutrientItem(name: "Grasas", value: "\(Int(nutritionalInfo.fats))", unit: "g", color: .purple)
-                NutrientItem(name: "Fibra", value: "\(Int(nutritionalInfo.fiber))", unit: "g", color: .brown)
-                NutrientItem(name: "Azúcares", value: "\(Int(nutritionalInfo.sugars))", unit: "g", color: .pink)
+            ], spacing: 16) {
+                NutrientCard(
+                    name: "Calorías", 
+                    value: Int(nutritionalInfo.calories), 
+                    unit: "kcal", 
+                    color: .red,
+                    percentage: caloriePercentage
+                )
+                NutrientCard(
+                    name: "Carbohidratos", 
+                    value: Int(nutritionalInfo.carbohydrates), 
+                    unit: "g", 
+                    color: .orange,
+                    percentage: carbPercentage
+                )
+                NutrientCard(
+                    name: "Proteínas", 
+                    value: Int(nutritionalInfo.proteins), 
+                    unit: "g", 
+                    color: .green,
+                    percentage: proteinPercentage
+                )
+                NutrientCard(
+                    name: "Grasas", 
+                    value: Int(nutritionalInfo.fats), 
+                    unit: "g", 
+                    color: .purple,
+                    percentage: fatPercentage
+                )
+                NutrientCard(
+                    name: "Fibra", 
+                    value: Int(nutritionalInfo.fiber), 
+                    unit: "g", 
+                    color: .brown,
+                    percentage: fiberPercentage
+                )
+                NutrientCard(
+                    name: "Azúcares", 
+                    value: Int(nutritionalInfo.sugars), 
+                    unit: "g", 
+                    color: .pink,
+                    percentage: sugarPercentage
+                )
             }
         }
         .padding()
@@ -218,55 +322,79 @@ struct NutritionalInfoCard: View {
         .cornerRadius(15)
         .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
     }
+    
+    // Porcentajes aproximados basados en recomendaciones diarias (2000 kcal)
+    private var caloriePercentage: Double { min(nutritionalInfo.calories / 2000 * 100, 100) }
+    private var carbPercentage: Double { min(nutritionalInfo.carbohydrates / 300 * 100, 100) }
+    private var proteinPercentage: Double { min(nutritionalInfo.proteins / 150 * 100, 100) }
+    private var fatPercentage: Double { min(nutritionalInfo.fats / 65 * 100, 100) }
+    private var fiberPercentage: Double { min(nutritionalInfo.fiber / 25 * 100, 100) }
+    private var sugarPercentage: Double { min(nutritionalInfo.sugars / 50 * 100, 100) }
 }
 
-struct NutrientItem: View {
+struct NutrientCard: View {
     let name: String
-    let value: String
+    let value: Int
     let unit: String
     let color: Color
+    let percentage: Double
     
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 12) {
             HStack {
                 Circle()
                     .fill(color)
-                    .frame(width: 8, height: 8)
+                    .frame(width: 12, height: 12)
                 Text(name)
                     .font(.caption)
+                    .fontWeight(.medium)
                     .foregroundColor(.secondary)
                 Spacer()
             }
             
-            HStack {
-                Text(value)
-                    .font(.title3)
+            HStack(alignment: .bottom, spacing: 4) {
+                Text("\(value)")
+                    .font(.title2)
                     .fontWeight(.bold)
+                    .foregroundColor(.primary)
                 Text(unit)
                     .font(.caption)
                     .foregroundColor(.secondary)
                 Spacer()
             }
+            
+            // Barra de progreso
+            ProgressView(value: percentage, total: 100)
+                .progressViewStyle(LinearProgressViewStyle(tint: color))
+                .scaleEffect(x: 1, y: 2, anchor: .center)
+            
+            Text("\(Int(percentage))% VD*")
+                .font(.caption2)
+                .foregroundColor(.secondary)
         }
-        .padding(.vertical, 8)
+        .padding()
+        .background(color.opacity(0.05))
+        .cornerRadius(12)
     }
 }
 
-struct HealthInsightsCard: View {
+// MARK: - Card de insights para diabetes
+
+struct DiabetesInsightsCard: View {
     let insights: [HealthInsight]
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Image(systemName: "lightbulb.fill")
-                    .foregroundColor(.yellow)
-                Text("Insights de Salud")
+                Image(systemName: "brain.head.profile")
+                    .foregroundColor(.purple)
+                Text("Insights IA para Diabetes")
                     .font(.headline)
                     .fontWeight(.semibold)
             }
             
             ForEach(insights.indices, id: \.self) { index in
-                InsightRow(insight: insights[index])
+                InsightCard(insight: insights[index])
             }
         }
         .padding()
@@ -276,70 +404,123 @@ struct HealthInsightsCard: View {
     }
 }
 
-struct InsightRow: View {
+struct InsightCard: View {
     let insight: HealthInsight
     
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            Image(systemName: insight.category.icon)
-                .foregroundColor(Color(insight.severity.color))
-                .frame(width: 20)
+            // Icono con color de severidad
+            ZStack {
+                Circle()
+                    .fill(severityColor.opacity(0.2))
+                    .frame(width: 32, height: 32)
+                
+                Image(systemName: insight.category.icon)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(severityColor)
+            }
             
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(insight.title)
                     .font(.subheadline)
                     .fontWeight(.semibold)
+                    .foregroundColor(.primary)
                 
                 Text(insight.description)
                     .font(.caption)
                     .foregroundColor(.secondary)
-                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             
             Spacer()
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 8)
+    }
+    
+    private var severityColor: Color {
+        switch insight.severity {
+        case .info:
+            return .blue
+        case .warning:
+            return .orange
+        case .critical:
+            return .red
+        }
     }
 }
 
-struct GlucoseImpactCard: View {
+// MARK: - Card de impacto glucémico con visualización
+
+struct GlucoseImpactVisualizationCard: View {
     let nutritionalInfo: NutritionalInfo
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Image(systemName: "drop.fill")
+                Image(systemName: "waveform.path.ecg")
                     .foregroundColor(.red)
                 Text("Impacto en Glucosa")
                     .font(.headline)
                     .fontWeight(.semibold)
             }
             
-            VStack(spacing: 12) {
-                HStack {
-                    Text("Índice Glucémico:")
-                    Spacer()
-                    Text(nutritionalInfo.glycemicIndex.rawValue.capitalized)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 4)
-                        .background(glycemicIndexColor.opacity(0.2))
+            VStack(spacing: 16) {
+                // Visualización del índice glucémico
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Índice Glucémico")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    
+                    HStack {
+                        Text("Bajo")
+                            .font(.caption)
+                        Spacer()
+                        Text("Medio")
+                            .font(.caption)
+                        Spacer()
+                        Text("Alto")
+                            .font(.caption)
+                    }
+                    .foregroundColor(.secondary)
+                    
+                    // Barra de IG
+                    ZStack(alignment: .leading) {
+                        Rectangle()
+                            .fill(LinearGradient(
+                                gradient: Gradient(colors: [.green, .orange, .red]),
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            ))
+                            .frame(height: 8)
+                            .cornerRadius(4)
+                        
+                        // Indicador de posición
+                        Circle()
+                            .fill(Color.white)
+                            .frame(width: 16, height: 16)
+                            .shadow(radius: 2)
+                            .offset(x: glycemicIndexPosition)
+                    }
+                    
+                    Text("\(nutritionalInfo.glycemicIndex.rawValue.capitalized)")
+                        .font(.caption)
+                        .fontWeight(.semibold)
                         .foregroundColor(glycemicIndexColor)
-                        .cornerRadius(8)
                 }
                 
-                HStack {
-                    Text("Carga Glucémica:")
-                    Spacer()
-                    Text("\(String(format: "%.1f", nutritionalInfo.glycemicLoad))")
-                        .fontWeight(.semibold)
-                }
-                
-                HStack {
-                    Text("Impacto Esperado:")
-                    Spacer()
-                    Text(nutritionalInfo.carbsPerGlucoseImpact)
-                        .fontWeight(.semibold)
-                        .foregroundColor(impactColor)
+                // Métricas de impacto
+                HStack(spacing: 20) {
+                    ImpactMetric(
+                        title: "Carga Glucémica",
+                        value: String(format: "%.1f", nutritionalInfo.glycemicLoad),
+                        color: glycemicLoadColor
+                    )
+                    
+                    ImpactMetric(
+                        title: "Impacto Esperado",
+                        value: nutritionalInfo.carbsPerGlucoseImpact,
+                        color: impactColor
+                    )
                 }
             }
         }
@@ -347,6 +528,14 @@ struct GlucoseImpactCard: View {
         .background(Color(.systemBackground))
         .cornerRadius(15)
         .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
+    }
+    
+    private var glycemicIndexPosition: CGFloat {
+        switch nutritionalInfo.glycemicIndex {
+        case .low: return 25
+        case .medium: return 125
+        case .high: return 225
+        }
     }
     
     private var glycemicIndexColor: Color {
@@ -354,6 +543,15 @@ struct GlucoseImpactCard: View {
         case .low: return .green
         case .medium: return .orange
         case .high: return .red
+        }
+    }
+    
+    private var glycemicLoadColor: Color {
+        let load = nutritionalInfo.glycemicLoad
+        switch load {
+        case 0...10: return .green
+        case 11...19: return .orange
+        default: return .red
         }
     }
     
@@ -366,8 +564,36 @@ struct GlucoseImpactCard: View {
     }
 }
 
-struct SaveMealCard: View {
+struct ImpactMetric: View {
+    let title: String
+    let value: String
+    let color: Color
+    
+    var body: some View {
+        VStack(spacing: 4) {
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+            
+            Text(value)
+                .font(.subheadline)
+                .fontWeight(.bold)
+                .foregroundColor(color)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
+        .background(color.opacity(0.1))
+        .cornerRadius(8)
+    }
+}
+
+// MARK: - Card para guardar en historial
+
+struct SaveToHistoryCard: View {
     let foodName: String
+    @Binding var selectedMealType: MealType
     @Binding var portionSize: String
     @Binding var notes: String
     let onSave: () -> Void
@@ -377,38 +603,71 @@ struct SaveMealCard: View {
             HStack {
                 Image(systemName: "square.and.arrow.down.fill")
                     .foregroundColor(.green)
-                Text("Guardar en Mis Comidas")
+                Text("Guardar en Historial")
                     .font(.headline)
                     .fontWeight(.semibold)
             }
             
-            VStack(spacing: 12) {
-                HStack {
-                    Text("Porción (gramos):")
-                    Spacer()
-                    TextField("100", text: $portionSize)
-                        .keyboardType(.numberPad)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .frame(width: 80)
+            VStack(spacing: 16) {
+                // Tipo de comida
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Tipo de Comida")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    
+                    Picker("Tipo", selection: $selectedMealType) {
+                        ForEach(MealType.allCases) { type in
+                            Text(type.rawValue).tag(type)
+                        }
+                    }
+                    .pickerStyle(SegmentedPickerStyle())
                 }
                 
+                // Porción
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Notas (opcional):")
-                    TextField("Ej: Almuerzo en casa", text: $notes)
+                    Text("Porción (gramos)")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    
+                    HStack {
+                        TextField("100", text: $portionSize)
+                            .keyboardType(.numberPad)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                        Text("gramos")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                
+                // Notas opcionales
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Notas (opcional)")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    
+                    TextField("Ej: Almuerzo en casa, muy sabroso", text: $notes)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                 }
             }
             
+            // Botón de guardar
             Button(action: onSave) {
-                HStack {
-                    Image(systemName: "plus.circle.fill")
-                    Text("Agregar a Mis Comidas")
+                HStack(spacing: 12) {
+                    Image(systemName: "brain")
+                    Text("Guardar Análisis IA")
+                        .fontWeight(.semibold)
                 }
                 .font(.headline)
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(Color.green)
+                .background(
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color.green, Color.green.opacity(0.8)]),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
                 .cornerRadius(12)
             }
         }
