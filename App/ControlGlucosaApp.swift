@@ -24,7 +24,7 @@ struct ControlGlucosaApp: App {
                 case .userSetup:
                     UserSetupView()
                 case .main:
-                    ContentView()
+                    MainTabView()  // ← CAMBIO AQUÍ: Usar MainTabView en lugar de ContentView
                 }
             }
             .environmentObject(appState)
