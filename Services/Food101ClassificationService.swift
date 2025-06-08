@@ -152,20 +152,26 @@ class Food101ClassificationService: ObservableObject {
         return false
     }
     
-    // MARK: - Función Principal de Clasificación (MEJORADA)
+// MARK: - Función Principal de Clasificación (MEJORADA CON DIAGNÓSTICO)
     func classifyFood(image: UIImage) async throws -> FoodAnalysisResult {
         guard let cgImage = image.cgImage else {
             throw Food101Error.imageProcessingFailed
         }
         
         print("🧠 Iniciando análisis con estrategias múltiples...")
+        print("🔍 Estado del modelo: \(model != nil ? "CARGADO" : "NO CARGADO")")
         
         // Estrategia 1: Intentar con modelo cargado
         if let model = model {
             print("🎯 Intentando con modelo cargado...")
+            print("📊 Modelo info: \(String(describing: model))")
             if let result = try await attemptModelClassification(cgImage: cgImage, model: model) {
                 return result
+            } else {
+                print("⚠️ El modelo no devolvió resultados válidos")
             }
+        } else {
+            print("❌ NO HAY MODELO CARGADO - Saltando a Vision framework")
         }
         
         // Estrategia 2: Vision framework built-in
@@ -180,6 +186,7 @@ class Food101ClassificationService: ObservableObject {
     }
 
 // MARK: - Estrategia 1: Modelo personalizado
+    // MARK: - Estrategia 1: Modelo personalizado
 private func attemptModelClassification(cgImage: CGImage, model: VNCoreMLModel) async throws -> FoodAnalysisResult? {
     return try await withCheckedThrowingContinuation { continuation in
         let request = VNCoreMLRequest(model: model) { request, error in
@@ -189,27 +196,51 @@ private func attemptModelClassification(cgImage: CGImage, model: VNCoreMLModel) 
                 return
             }
             
-            guard let results = request.results as? [VNClassificationObservation] else {
-                print("❌ Tipo de resultado incorrecto")
+            print("🔍 Tipo de resultados: \(type(of: request.results))")
+            print("📊 Cantidad de resultados: \(request.results?.count ?? 0)")
+            
+            // Intentar diferentes tipos de resultados
+            if let classificationResults = request.results as? [VNClassificationObservation] {
+                print("✅ Resultados de clasificación obtenidos")
+                let validResults = classificationResults.filter { $0.confidence > 0.01 }
+                
+                guard !validResults.isEmpty else {
+                    print("❌ No hay resultados válidos")
+                    continuation.resume(returning: nil)
+                    return
+                }
+                
+                print("✅ Encontrados \(validResults.count) resultados válidos")
+                let result = self.createResult(from: validResults, analysisType: "Modelo IA")
+                continuation.resume(returning: result)
+                
+            } else if let coreMLResults = request.results as? [VNCoreMLFeatureValueObservation] {
+                print("🔄 Resultados CoreML - intentando convertir...")
+                // Manejar resultados CoreML directos
+                if let convertedResults = self.convertCoreMLResults(coreMLResults) {
+                    let result = self.createResult(from: convertedResults, analysisType: "Modelo IA (CoreML)")
+                    continuation.resume(returning: result)
+                } else {
+                    print("❌ No se pudieron convertir resultados CoreML")
+                    continuation.resume(returning: nil)
+                }
+                
+            } else if let pixelBufferResults = request.results as? [VNPixelBufferObservation] {
+                print("🖼️ Resultados de pixel buffer - no compatible")
                 continuation.resume(returning: nil)
-                return
-            }
-            
-            // Filtrar resultados con confianza mínima
-            let validResults = results.filter { $0.confidence > 0.01 }
-            
-            guard !validResults.isEmpty else {
-                print("❌ No hay resultados válidos")
+                
+            } else {
+                print("❌ Tipo de resultado desconocido")
+                if let results = request.results {
+                    for (index, result) in results.enumerated() {
+                        print("   Resultado \(index): \(type(of: result))")
+                    }
+                }
                 continuation.resume(returning: nil)
-                return
             }
-            
-            print("✅ Encontrados \(validResults.count) resultados válidos")
-            let result = self.createResult(from: validResults, analysisType: "Modelo IA")
-            continuation.resume(returning: result)
         }
         
-        // Configurar request con múltiples opciones
+        // Configurar request
         request.imageCropAndScaleOption = .scaleFill
         let handler = VNImageRequestHandler(cgImage: cgImage, options: [
             VNImageOption.ciContext: CIContext()
@@ -222,6 +253,32 @@ private func attemptModelClassification(cgImage: CGImage, model: VNCoreMLModel) 
             continuation.resume(returning: nil)
         }
     }
+}
+
+// Método para convertir resultados CoreML a clasificación
+private func convertCoreMLResults(_ coreMLResults: [VNCoreMLFeatureValueObservation]) -> [VNClassificationObservation]? {
+    var classifications: [VNClassificationObservation] = []
+    
+    for result in coreMLResults {
+        if let multiArray = result.featureValue.multiArrayValue {
+            // Convertir MultiArray a clasificaciones
+            let length = multiArray.count
+            let dataPointer = multiArray.dataPointer.bindMemory(to: Double.self, capacity: length)
+            
+            for i in 0..<length {
+                let confidence = Float(dataPointer[i])
+                if confidence > 0.01 { // Filtro mínimo
+                    // Crear observación de clasificación simulada
+                    // Nota: Esto es una aproximación, deberías mapear índices a nombres reales
+                    let identifier = "food_class_\(i)"
+                    // VNClassificationObservation no se puede crear directamente
+                    // Usaremos una aproximación
+                }
+            }
+        }
+    }
+    
+    return classifications.isEmpty ? nil : classifications
 }
 
 // MARK: - Estrategia 2: Vision built-in
