@@ -19,18 +19,3 @@ struct ControlGlucosaApp: App {
         }
     }
 }
-
-// Remove this ContentView - it's already defined in ContentView.swift
-// struct ContentView: View {
-//     var body: some View {
-//         VStack {
-//             Text("Hello, ControlGlucosa!")
-//                 .font(.largeTitle)
-//                 .padding()
-//             
-//             Text("Glucose Control App")
-//                 .font(.subheadline)
-//                 .foregroundColor(.secondary)
-//         }
-//     }
-// }

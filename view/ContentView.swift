@@ -6,117 +6,91 @@
 //
 
 import SwiftUI
-
-// A view to add a new meal
-struct AddMealView: View {
-    @Environment(\.presentationMode) var presentationMode
-    @Binding var meals: [Meal]
-    @State private var name: String = ""
-    @State private var glucoseLevel: String = ""
-    @State private var selectedType: MealType = .breakfast
-    @State private var date: Date = Date()
-
-    var body: some View {
-        NavigationView {
-            Form {
-                Section(header: Text("Nombre de la comida")) {
-                    TextField("Ejemplo: Desayuno", text: $name)
-                }
-                Section(header: Text("Tipo de comida")) {
-                    Picker("Tipo", selection: $selectedType) {
-                        ForEach(MealType.allCases) { type in
-                            Text(type.rawValue).tag(type)
-                        }
-                    }
-                }
-                Section(header: Text("Nivel de glucosa (mg/dL)")) {
-                    TextField("Ejemplo: 110", text: $glucoseLevel)
-                        .keyboardType(.decimalPad)
-                }
-                Section(header: Text("Fecha")) {
-                    DatePicker("Selecciona la fecha", selection: $date, displayedComponents: .date)
-                }
-            }
-            .navigationTitle("Agregar comida")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancelar") {
-                        presentationMode.wrappedValue.dismiss()
-                    }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Guardar") {
-                        let glucose = Double(glucoseLevel)
-                        let newMeal = Meal(
-                            name: name,
-                            type: selectedType,
-                            portions: [],
-                            timestamp: date,
-                            glucoseReadingBefore: nil,
-                            glucoseReadingAfter: nil,
-                            totalCarbs: nil,
-                            glucoseLevel: glucose,
-                            date: date
-                        )
-                        meals.append(newMeal)
-                        presentationMode.wrappedValue.dismiss()
-                    }
-                    .disabled(name.isEmpty)
-                }
-            }
-        }
-    }
-}
-
-// A view to display a single meal row
-struct MealRow: View {
-    let meal: Meal
-
-    var body: some View {
-        HStack {
-            VStack(alignment: .leading) {
-                Text(meal.name)
-                    .font(.headline)
-                Text("Glucosa: \(meal.glucoseLevel, specifier: "%.1f") mg/dL")
-                    .font(.subheadline)
-                Text(meal.date, style: .date)
-                    .font(.caption)
-                    .foregroundColor(.gray)
-            }
-            Spacer()
-        }
-        .padding(.vertical, 4)
-    }
-}
+import Foundation
 
 struct ContentView: View {
     @EnvironmentObject var meals: Meals
+    @EnvironmentObject var userProfiles: UserProfiles
     @State private var showingAddMeal = false
     
     var body: some View {
         NavigationView {
             VStack {
-                List(meals.meals) { meal in
-                    MealRow(meal: meal)
+                // Header con información del usuario
+                if !userProfiles.currentProfile.name.isEmpty {
+                    VStack(alignment: .leading) {
+                        Text("Hola, \(userProfiles.currentProfile.name)")
+                            .font(.title2)
+                            .foregroundColor(.primary)
+                        
+                        Text("Control de Glucosa")
+                            .font(.subheadline)
+                            .foregroundColor(Color.gray)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
                 }
                 
-                Button("Agregar comida") {
-                    showingAddMeal = true
+                // Lista de comidas
+                if meals.meals.isEmpty {
+                    // Estado vacío
+                    VStack(spacing: 20) {
+                        Image(systemName: "fork.knife.circle")
+                            .font(.system(size: 60))
+                            .foregroundColor(Color.gray)
+                        
+                        Text("No hay comidas registradas")
+                            .font(.title3)
+                            .foregroundColor(Color.gray)
+                        
+                        Text("Agrega tu primera comida para comenzar a hacer seguimiento")
+                            .font(.body)
+                            .foregroundColor(Color.gray.opacity(0.8))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    // Lista de comidas
+                    List {
+                        ForEach(meals.meals.sorted(by: { $0.date > $1.date })) { meal in
+                            MealRow(meal: meal)
+                        }
+                        .onDelete(perform: deleteMeals)
+                    }
                 }
-                .font(.title2)
+                
+                // Botón para agregar comida
+                Button(action: {
+                    showingAddMeal = true
+                }) {
+                    HStack {
+                        Image(systemName: "plus")
+                        Text("Agregar Comida")
+                    }
+                    .font(.title2)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.blue)
+                    .cornerRadius(10)
+                }
                 .padding()
-                .frame(maxWidth: .infinity)
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(10)
-                .padding()
-                .accessibilityLabel("Agregar comida")
+                .accessibilityLabel("Agregar nueva comida")
             }
-            .navigationTitle("Registro de Comidas")
+            .navigationTitle("Control de Glucosa")
+            .navigationBarTitleDisplayMode(.large)
             .sheet(isPresented: $showingAddMeal) {
-                AddMealView(meals: $meals.meals)
+                AddMealView()
             }
         }
     }
+    
+    // Función para eliminar comidas
+    private func deleteMeals(offsets: IndexSet) {
+        let sortedMeals = meals.meals.sorted(by: { $0.date > $1.date })
+        for index in offsets {
+            meals.deleteMeal(sortedMeals[index])
+        }
+    }
 }
-
