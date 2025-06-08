@@ -4,151 +4,167 @@ struct UserSetupView: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var userProfiles: UserProfiles
     
+    @State private var currentStep = 1
     @State private var name = ""
     @State private var age = ""
-    @State private var selectedDiabetesType: DiabetesType = .type1
-    @State private var hasInsurance = false
-    @State private var preferredLanguage: Language = .spanish
-    @State private var currentStep = 0
+    @State private var selectedDiabetesType: DiabetesType = .type2
+    @State private var diagnosisYear = ""
+    @State private var enableNotifications = true
+    @State private var selectedUnits = "mg/dL"
+    
+    private let totalSteps = 3
     
     var body: some View {
-        NavigationView {
-            VStack {
-                // Progress Indicator
-                ProgressView("Paso \(currentStep + 1) de 3", value: Double(currentStep + 1), total: 3)
-                    .padding()
-                
-                TabView(selection: $currentStep) {
-                    // Step 1: Personal Info
-                    PersonalInfoStep(name: $name, age: $age)
-                        .tag(0)
+        GeometryReader { geometry in
+            VStack(spacing: 0) {
+                // Header - Título principal
+                VStack(spacing: 20) {
+                    Text("Configuración")
+                        .font(.title2)
+                        .fontWeight(.medium)
+                        .foregroundColor(.black)
+                        .padding(.top, 60)
                     
-                    // Step 2: Medical Info
-                    MedicalInfoStep(selectedDiabetesType: $selectedDiabetesType, hasInsurance: $hasInsurance)
-                        .tag(1)
-                    
-                    // Step 3: Preferences
-                    PreferencesStep(preferredLanguage: $preferredLanguage)
-                        .tag(2)
-                }
-                .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-                
-                // Navigation Buttons
-                HStack {
-                    if currentStep > 0 {
-                        Button("Anterior") {
-                            withAnimation {
-                                currentStep -= 1
+                    // Indicador de progreso
+                    VStack(spacing: 12) {
+                        Text("Paso \(currentStep) de \(totalSteps)")
+                            .font(.title3)
+                            .fontWeight(.regular)
+                            .foregroundColor(.black)
+                        
+                        // Barra de progreso con el estilo exacto de la imagen
+                        HStack(spacing: 4) {
+                            ForEach(1...totalSteps, id: \.self) { step in
+                                Rectangle()
+                                    .fill(step <= currentStep ? Color.blue : Color.gray.opacity(0.3))
+                                    .frame(height: 4)
+                                    .animation(.easeInOut(duration: 0.3), value: currentStep)
                             }
                         }
-                        .foregroundColor(.blue)
-                    }
-                    
-                    Spacer()
-                    
-                    if currentStep < 2 {
-                        Button("Siguiente") {
-                            withAnimation {
-                                currentStep += 1
-                            }
-                        }
-                        .disabled(!canContinue)
-                        .foregroundColor(canContinue ? .blue : .gray)
-                    } else {
-                        Button("Finalizar") {
-                            saveUserProfile()
-                            withAnimation(.spring()) {
-                                appState.navigateToMain()
-                            }
-                        }
-                        .disabled(!canFinish)
-                        .foregroundColor(canFinish ? .white : .gray)
-                        .padding()
-                        .background(canFinish ? Color.blue : Color.gray.opacity(0.3))
-                        .cornerRadius(10)
+                        .padding(.horizontal, 60)
                     }
                 }
-                .padding()
+                .padding(.bottom, 80)
+                
+                // Contenido del paso actual
+                stepContent
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                
+                // Botón de navegación
+                navigationButton
+                    .padding(.horizontal, 30)
+                    .padding(.bottom, 50)
             }
-            .navigationTitle("Configuración")
-            .navigationBarTitleDisplayMode(.inline)
         }
+        .background(Color.white)
+        .navigationBarHidden(true)
     }
     
-    var canContinue: Bool {
+    @ViewBuilder
+    private var stepContent: some View {
         switch currentStep {
-        case 0: return !name.isEmpty && !age.isEmpty
-        case 1: return true
-        default: return true
+        case 1:
+            personalInfoStep
+        case 2:
+            medicalInfoStep
+        case 3:
+            preferencesStep
+        default:
+            EmptyView()
         }
     }
     
-    var canFinish: Bool {
-        !name.isEmpty && !age.isEmpty
-    }
-    
-    func saveUserProfile() {
-        let profile = UserProfile(
-            name: name,
-            age: Int(age) ?? 0,
-            diabetesType: selectedDiabetesType.rawValue,
-            hasInsurance: hasInsurance,
-            preferredLanguage: preferredLanguage.rawValue
-        )
-        userProfiles.updateProfile(profile)
-    }
-}
-
-// MARK: - Setup Steps
-struct PersonalInfoStep: View {
-    @Binding var name: String
-    @Binding var age: String
-    
-    var body: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "person.circle.fill")
-                .font(.system(size: 60))
-                .foregroundColor(.blue)
+    // MARK: - Paso 1: Información Personal (Diseño exacto de la imagen)
+    private var personalInfoStep: some View {
+        VStack(spacing: 0) {
+            // Ícono circular azul exacto
+            ZStack {
+                Circle()
+                    .fill(Color.blue)
+                    .frame(width: 80, height: 80)
+                
+                Image(systemName: "person.fill")
+                    .font(.system(size: 35))
+                    .foregroundColor(.white)
+            }
+            .padding(.bottom, 40)
             
+            // Título
             Text("Información Personal")
                 .font(.title2)
-                .fontWeight(.bold)
+                .fontWeight(.semibold)
+                .foregroundColor(.black)
+                .padding(.bottom, 60)
             
-            VStack(spacing: 15) {
-                TextField("Nombre completo", text: $name)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
+            // Campos de entrada con estilo exacto
+            VStack(spacing: 40) {
+                // Campo Nombre
+                VStack(alignment: .leading, spacing: 8) {
+                    TextField("Nombre Completo", text: $name)
+                        .font(.system(size: 20))
+                        .foregroundColor(.black)
+                        .padding(.vertical, 16)
+                        .background(Color.clear)
+                        .overlay(
+                            Rectangle()
+                                .frame(height: 1)
+                                .foregroundColor(Color.gray.opacity(0.4)),
+                            alignment: .bottom
+                        )
+                }
                 
-                TextField("Edad", text: $age)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .keyboardType(.numberPad)
+                // Campo Edad
+                VStack(alignment: .leading, spacing: 8) {
+                    TextField("Edad", text: $age)
+                        .font(.system(size: 20))
+                        .foregroundColor(.black)
+                        .keyboardType(.numberPad)
+                        .padding(.vertical, 16)
+                        .background(Color.clear)
+                        .overlay(
+                            Rectangle()
+                                .frame(height: 1)
+                                .foregroundColor(Color.gray.opacity(0.4)),
+                            alignment: .bottom
+                        )
+                }
             }
+            .padding(.horizontal, 40)
             
             Spacer()
         }
-        .padding()
     }
-}
-
-struct MedicalInfoStep: View {
-    @Binding var selectedDiabetesType: DiabetesType
-    @Binding var hasInsurance: Bool
     
-    var body: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "heart.text.square.fill")
-                .font(.system(size: 60))
-                .foregroundColor(.red)
+    // MARK: - Paso 2: Información Médica
+    private var medicalInfoStep: some View {
+        VStack(spacing: 0) {
+            // Ícono médico
+            ZStack {
+                Circle()
+                    .fill(Color.red.opacity(0.9))
+                    .frame(width: 80, height: 80)
+                
+                Image(systemName: "heart.fill")
+                    .font(.system(size: 35))
+                    .foregroundColor(.white)
+            }
+            .padding(.bottom, 40)
             
+            // Título
             Text("Información Médica")
                 .font(.title2)
-                .fontWeight(.bold)
+                .fontWeight(.semibold)
+                .foregroundColor(.black)
+                .padding(.bottom, 40)
             
-            VStack(spacing: 15) {
-                VStack(alignment: .leading) {
+            // Campos médicos
+            VStack(spacing: 30) {
+                VStack(alignment: .leading, spacing: 15) {
                     Text("Tipo de Diabetes")
                         .font(.headline)
+                        .foregroundColor(.black)
                     
-                    Picker("Tipo de Diabetes", selection: $selectedDiabetesType) {
+                    Picker("Tipo", selection: $selectedDiabetesType) {
                         ForEach(DiabetesType.allCases) { type in
                             Text(type.rawValue).tag(type)
                         }
@@ -156,61 +172,134 @@ struct MedicalInfoStep: View {
                     .pickerStyle(SegmentedPickerStyle())
                 }
                 
-                Toggle("¿Tienes seguro médico?", isOn: $hasInsurance)
-                    .toggleStyle(SwitchToggleStyle())
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Año de Diagnóstico")
+                        .font(.headline)
+                        .foregroundColor(.black)
+                    
+                    TextField("2020", text: $diagnosisYear)
+                        .font(.system(size: 20))
+                        .foregroundColor(.black)
+                        .keyboardType(.numberPad)
+                        .padding(.vertical, 16)
+                        .background(Color.clear)
+                        .overlay(
+                            Rectangle()
+                                .frame(height: 1)
+                                .foregroundColor(Color.gray.opacity(0.4)),
+                            alignment: .bottom
+                        )
+                }
             }
+            .padding(.horizontal, 40)
             
             Spacer()
         }
-        .padding()
     }
-}
-
-struct PreferencesStep: View {
-    @Binding var preferredLanguage: Language
     
-    var body: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "gearshape.fill")
-                .font(.system(size: 60))
-                .foregroundColor(.green)
+    // MARK: - Paso 3: Preferencias
+    private var preferencesStep: some View {
+        VStack(spacing: 0) {
+            // Ícono de configuración
+            ZStack {
+                Circle()
+                    .fill(Color.green.opacity(0.9))
+                    .frame(width: 80, height: 80)
+                
+                Image(systemName: "gearshape.fill")
+                    .font(.system(size: 35))
+                    .foregroundColor(.white)
+            }
+            .padding(.bottom, 40)
             
-            Text("Preferencias")
+            // Título
+            Text("Configuración Final")
                 .font(.title2)
-                .fontWeight(.bold)
+                .fontWeight(.semibold)
+                .foregroundColor(.black)
+                .padding(.bottom, 40)
             
-            VStack(spacing: 15) {
-                VStack(alignment: .leading) {
-                    Text("Idioma preferido")
+            // Opciones de configuración
+            VStack(spacing: 25) {
+                VStack(alignment: .leading, spacing: 15) {
+                    Text("Unidades de Glucosa")
                         .font(.headline)
+                        .foregroundColor(.black)
                     
-                    Picker("Idioma", selection: $preferredLanguage) {
-                        ForEach(Language.allCases) { language in
-                            Text(language.rawValue).tag(language)
-                        }
+                    Picker("Unidades", selection: $selectedUnits) {
+                        Text("mg/dL").tag("mg/dL")
+                        Text("mmol/L").tag("mmol/L")
                     }
                     .pickerStyle(SegmentedPickerStyle())
                 }
+                
+                Toggle("Activar Notificaciones", isOn: $enableNotifications)
+                    .font(.headline)
+                    .foregroundColor(.black)
+                    .toggleStyle(SwitchToggleStyle(tint: .blue))
             }
+            .padding(.horizontal, 40)
             
             Spacer()
         }
-        .padding()
     }
-}
-
-// MARK: - Supporting Enums
-enum DiabetesType: String, CaseIterable, Identifiable {
-    case type1 = "Tipo 1"
-    case type2 = "Tipo 2"
-    case gestational = "Gestacional"
     
-    var id: String { rawValue }
-}
-
-enum Language: String, CaseIterable, Identifiable {
-    case spanish = "Español"
-    case english = "English"
+    // MARK: - Botón de navegación (estilo exacto)
+    @ViewBuilder
+    private var navigationButton: some View {
+        HStack {
+            Spacer()
+            
+            Button(action: {
+                if currentStep < totalSteps {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        currentStep += 1
+                    }
+                } else {
+                    // Finalizar setup
+                    saveUserProfile()
+                    withAnimation(.spring()) {
+                        appState.navigateToMain()
+                    }
+                }
+            }) {
+                Text(currentStep < totalSteps ? "Siguiente" : "Finalizar")
+                    .font(.system(size: 18))
+                    .fontWeight(.medium)
+                    .foregroundColor(.blue)
+            }
+            .disabled(!canContinue)
+            .opacity(canContinue ? 1.0 : 0.5)
+        }
+    }
     
-    var id: String { rawValue }
+    // MARK: - Validaciones
+    private var canContinue: Bool {
+        switch currentStep {
+        case 1:
+            return !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+                   !age.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        case 2:
+            return !diagnosisYear.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        case 3:
+            return true
+        default:
+            return false
+        }
+    }
+    
+    // MARK: - Guardar perfil
+    private func saveUserProfile() {
+        let profile = UserProfile(
+            name: name.trimmingCharacters(in: .whitespacesAndNewlines),
+            age: Int(age) ?? 0,
+            diabetesType: selectedDiabetesType.rawValue,
+            diagnosisYear: diagnosisYear.trimmingCharacters(in: .whitespacesAndNewlines),
+            hasInsurance: false,
+            preferredLanguage: "Español",
+            preferredUnits: selectedUnits,
+            notificationsEnabled: enableNotifications
+        )
+        userProfiles.updateProfile(profile)
+    }
 }

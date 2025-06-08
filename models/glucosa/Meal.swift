@@ -1,7 +1,7 @@
 import Foundation
 
 struct Meal: Identifiable, Codable {
-    let id = UUID()
+    var id = UUID()
     var name: String
     var type: MealType
     var portions: [String]

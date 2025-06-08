@@ -30,6 +30,14 @@ struct ControlGlucosaApp: App {
             .environmentObject(appState)
             .environmentObject(userProfiles)
             .environmentObject(meals)
+            .onAppear {
+                // Determinar la pantalla inicial basado en el estado del usuario
+                if userProfiles.isProfileSetup && !userProfiles.currentProfile.name.isEmpty {
+                    appState.currentScreen = .main
+                } else {
+                    appState.currentScreen = .welcome
+                }
+            }
         }
     }
 }
@@ -38,12 +46,28 @@ struct ControlGlucosaApp: App {
 class AppState: ObservableObject {
     @Published var currentScreen: AppScreen = .welcome
     
+    func navigateToWelcome() {
+        withAnimation(.easeInOut(duration: 0.5)) {
+            currentScreen = .welcome
+        }
+    }
+    
     func navigateToUserSetup() {
-        currentScreen = .userSetup
+        withAnimation(.easeInOut(duration: 0.5)) {
+            currentScreen = .userSetup
+        }
     }
     
     func navigateToMain() {
-        currentScreen = .main
+        withAnimation(.easeInOut(duration: 0.5)) {
+            currentScreen = .main
+        }
+    }
+    
+    func resetToWelcome() {
+        withAnimation(.easeInOut(duration: 0.5)) {
+            currentScreen = .welcome
+        }
     }
 }
 

@@ -1,17 +1,12 @@
-//
-//  ContentView.swift
-//  ControlGlucosa
-//
-//  Created by Alumno on 07/06/25.
-//
-
 import SwiftUI
 import Foundation
 
 struct ContentView: View {
     @EnvironmentObject var meals: Meals
     @EnvironmentObject var userProfiles: UserProfiles
+    @EnvironmentObject var appState: AppState
     @State private var showingAddMeal = false
+    @State private var showingResetAlert = false
     
     var body: some View {
         NavigationView {
@@ -80,8 +75,32 @@ struct ContentView: View {
             }
             .navigationTitle("Control de Glucosa")
             .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Menu {
+                        Button("Configuración del Perfil") {
+                            appState.navigateToUserSetup()
+                        }
+                        
+                        Button("Reiniciar App (Testing)", role: .destructive) {
+                            showingResetAlert = true
+                        }
+                    } label: {
+                        Image(systemName: "person.circle")
+                            .foregroundColor(.blue)
+                    }
+                }
+            }
             .sheet(isPresented: $showingAddMeal) {
                 AddMealView()
+            }
+            .alert("Reiniciar Aplicación", isPresented: $showingResetAlert) {
+                Button("Cancelar", role: .cancel) { }
+                Button("Reiniciar", role: .destructive) {
+                    resetApp()
+                }
+            } message: {
+                Text("Esto borrará todos los datos y te llevará al registro inicial. ¿Estás seguro?")
             }
         }
     }
@@ -92,5 +111,15 @@ struct ContentView: View {
         for index in offsets {
             meals.deleteMeal(sortedMeals[index])
         }
+    }
+    
+    // Función para resetear la app
+    private func resetApp() {
+        // Borrar todos los datos
+        userProfiles.resetProfile()
+        meals.meals.removeAll()
+        
+        // Volver a la pantalla de bienvenida
+        appState.resetToWelcome()
     }
 }

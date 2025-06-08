@@ -9,12 +9,12 @@ import Foundation
 
 // MARK: - Ingredient Structure
 struct Ingredient: Identifiable, Codable {
-    var id = UUID() // Esto satisface el protocolo Identifiable
-    let name: String
-    let carbohydrates: Double
-    let calories: Double
-    let category: IngredientCategory
-    let glycemicIndex: GlycemicIndex
+    var id = UUID()
+    var name: String
+    var carbohydrates: Double
+    var calories: Double
+    var category: IngredientCategory
+    var glycemicIndex: GlycemicIndex
     
     // Inicializador personalizado
     init(name: String, carbohydrates: Double, calories: Double, category: IngredientCategory = .other, glycemicIndex: GlycemicIndex = .medium) {
@@ -28,10 +28,10 @@ struct Ingredient: Identifiable, Codable {
 
 // MARK: - Portion Structure
 struct Portion: Identifiable, Codable {
-    var id = UUID() // Propiedad requerida por Identifiable
-    let ingredient: Ingredient
-    let amount: Double
-    let unit: String
+    var id = UUID()
+    var ingredient: Ingredient
+    var amount: Double
+    var unit: String
     
     // Propiedades calculadas para facilitar el uso
     var totalCarbohydrates: Double {
