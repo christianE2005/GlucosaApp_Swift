@@ -7,19 +7,13 @@
 
 import SwiftUI
 
-struct Meal: Identifiable {
-    let id = UUID()
-    let name: String
-    let glucoseLevel: Double
-    let date: Date
-}
-
 // A view to add a new meal
 struct AddMealView: View {
     @Environment(\.presentationMode) var presentationMode
     @Binding var meals: [Meal]
     @State private var name: String = ""
     @State private var glucoseLevel: String = ""
+    @State private var selectedType: MealType = .breakfast
     @State private var date: Date = Date()
 
     var body: some View {
@@ -28,8 +22,16 @@ struct AddMealView: View {
                 Section(header: Text("Nombre de la comida")) {
                     TextField("Ejemplo: Desayuno", text: $name)
                 }
+                Section(header: Text("Tipo de comida")) {
+                    Picker("Tipo", selection: $selectedType) {
+                        ForEach(MealType.allCases) { type in
+                            Text(type.rawValue).tag(type)
+                        }
+                    }
+                }
                 Section(header: Text("Nivel de glucosa (mg/dL)")) {
                     TextField("Ejemplo: 110", text: $glucoseLevel)
+                        .keyboardType(.decimalPad)
                 }
                 Section(header: Text("Fecha")) {
                     DatePicker("Selecciona la fecha", selection: $date, displayedComponents: .date)
@@ -44,12 +46,22 @@ struct AddMealView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Guardar") {
-                        if let glucose = Double(glucoseLevel), !name.isEmpty {
-                            let newMeal = Meal(name: name, glucoseLevel: glucose, date: date)
-                            meals.append(newMeal)
-                            presentationMode.wrappedValue.dismiss()
-                        }
+                        let glucose = Double(glucoseLevel)
+                        let newMeal = Meal(
+                            name: name,
+                            type: selectedType,
+                            portions: [],
+                            timestamp: date,
+                            glucoseReadingBefore: nil,
+                            glucoseReadingAfter: nil,
+                            totalCarbs: nil,
+                            glucoseLevel: glucose,
+                            date: date
+                        )
+                        meals.append(newMeal)
+                        presentationMode.wrappedValue.dismiss()
                     }
+                    .disabled(name.isEmpty)
                 }
             }
         }
@@ -78,13 +90,13 @@ struct MealRow: View {
 }
 
 struct ContentView: View {
-    @State private var meals: [Meal] = []
+    @EnvironmentObject var meals: Meals
     @State private var showingAddMeal = false
     
     var body: some View {
         NavigationView {
             VStack {
-                List(meals) { meal in
+                List(meals.meals) { meal in
                     MealRow(meal: meal)
                 }
                 
@@ -100,9 +112,9 @@ struct ContentView: View {
                 .padding()
                 .accessibilityLabel("Agregar comida")
             }
-            .navigationTitle("Registro de Comias")
-            .sheet(isPresented: $showingAddMeal){
-                AddMealView(meals: $meals)
+            .navigationTitle("Registro de Comidas")
+            .sheet(isPresented: $showingAddMeal) {
+                AddMealView(meals: $meals.meals)
             }
         }
     }

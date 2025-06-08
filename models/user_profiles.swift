@@ -13,14 +13,6 @@ struct UserProfile: Identifiable, Codable {
     // Add other user profile properties as needed
 }
 
-struct ContentView: View {
-    @ObservedObject private var userProfile = UserProfiles()  // Variable: 'userProfile'
-    
-    var body: some View {
-        Text("Current user: \(userProfile.currentProfile.name)")
-        // Debería ser: \(userProfile.currentProfile.name)  ✅
-    }
-}
 
 
 class UserProfiles: ObservableObject {

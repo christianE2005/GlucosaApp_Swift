@@ -1,10 +1,10 @@
 import Foundation
 
-struct GlucoseReading: Identifiable, Codable {
-    let id = UUID()
-    let value: Double
+// Add the missing struct definition
+struct GlucoseReading: Codable {
+    let value: Int
     let timestamp: Date
-    let notes: String?
+    let notes: String
 }
 
 extension GlucoseReading {
@@ -22,19 +22,22 @@ extension GlucoseReading {
         }
     }
 }
+
 extension GlucoseReading: Comparable {
     static func < (lhs: GlucoseReading, rhs: GlucoseReading) -> Bool {
         lhs.timestamp < rhs.timestamp
     }
 }
+
 extension GlucoseReading: Hashable {
     func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
+        // Remove 'id' - it doesn't exist in your struct
         hasher.combine(value)
         hasher.combine(timestamp)
         hasher.combine(notes)
     }
 }
+
 extension GlucoseReading: CustomStringConvertible {
     var description: String {
         let dateFormatter = DateFormatter()
@@ -42,9 +45,11 @@ extension GlucoseReading: CustomStringConvertible {
         dateFormatter.timeStyle = .short
         let formattedDate = dateFormatter.string(from: timestamp)
         
-        return "Glucose Reading: \(value) mg/dL on \(formattedDate) - \(classification)\(notes.map { " (\($0))" } ?? "")"
+        // Fix: notes is a String, not optional
+        return "Glucose Reading: \(value) mg/dL on \(formattedDate) - \(classification)\(notes.isEmpty ? "" : " (\(notes))")"
     }
 }
+
 extension GlucoseReading {
     static func fromJSON(_ json: String) -> GlucoseReading? {
         guard let data = json.data(using: .utf8) else { return nil }
@@ -56,8 +61,3 @@ extension GlucoseReading {
         return String(data: data, encoding: .utf8)
     }
 }
-// This extension provides methods to convert GlucoseReading instances to and from JSON format.
-// It uses JSONEncoder and JSONDecoder to handle the conversion, allowing for easy serialization and deserialization of glucose readings.
-// The `fromJSON` method takes a JSON string and returns an optional GlucoseReading instance, while the `toJSON` method converts a GlucoseReading instance back to a JSON string.
-// This is useful for saving and loading glucose readings in a format that can be easily stored or transmitted.
-// The `fromJSON` method takes a JSON string and returns an optional GlucoseReading instance, while the `toJSON` method converts a GlucoseReading instance back to a JSON string.   

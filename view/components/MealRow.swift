@@ -1,18 +1,5 @@
 import SwiftUI
 
-struct Meal {
-    let name: String
-    let type: MealType
-    let totalCarbs: Double
-}
-
-enum MealType: String {
-    case breakfast = "Desayuno"
-    case lunch = "Almuerzo"
-    case dinner = "Cena"
-    case snack = "Snack"
-}
-
 struct MealRow: View {
     let meal: Meal
     
@@ -23,8 +10,14 @@ struct MealRow: View {
             Text(meal.type.rawValue)
                 .font(.subheadline)
                 .foregroundColor(.secondary)
-            Text("Carbohidratos: \(meal.totalCarbs, specifier: "%.1f")g")
-                .font(.caption)
+            if let totalCarbs = meal.totalCarbs {
+                Text("Carbohidratos: \(totalCarbs, specifier: "%.1f")g")
+                    .font(.caption)
+            }
+            if let glucoseLevel = meal.glucoseLevel {
+                Text("Glucosa: \(glucoseLevel, specifier: "%.1f") mg/dL")
+                    .font(.caption)
+            }
         }
         .padding(.vertical, 8)
     }

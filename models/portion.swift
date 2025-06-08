@@ -6,10 +6,23 @@
 //
 
 import Foundation
+// Add this above Portion if Ingredient doesn't exist
+struct Ingredient: Identifiable, Codable {
+    let name: String
+    let carbohydrates: Double
+    let calories: Double
+}
 
-struct Portion: Identifiable, Codable {
-    let id = UUID()
+extension Portion: Identifiable, Encodable {
     let ingredient: Ingredient
     let amount: Double
     let unit: String
+    
+    // Custom initializer
+    init(ingredient: Ingredient, amount: Double, unit: String) {
+        self.id = UUID()
+        self.ingredient = ingredient
+        self.amount = amount
+        self.unit = unit
+    }
 }

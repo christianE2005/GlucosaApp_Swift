@@ -6,14 +6,31 @@
 //
 
 import SwiftUI
+import Combine
+import Foundation
 
 @main
 struct ControlGlucosaApp: App {
-
-// Example ContentView definition to resolve the error
-struct ContentView: View {
-    var body: some View {
-        Text("Hello, world!")
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+                .environmentObject(UserProfiles()) // Provide the UserProfiles environment object
+                .environmentObject(Meals()) // Provide the Meals environment object
+        }
     }
 }
-}
+
+// Remove this ContentView - it's already defined in ContentView.swift
+// struct ContentView: View {
+//     var body: some View {
+//         VStack {
+//             Text("Hello, ControlGlucosa!")
+//                 .font(.largeTitle)
+//                 .padding()
+//             
+//             Text("Glucose Control App")
+//                 .font(.subheadline)
+//                 .foregroundColor(.secondary)
+//         }
+//     }
+// }
