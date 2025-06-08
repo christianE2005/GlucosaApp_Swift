@@ -15,8 +15,8 @@ struct InsightsView: View {
                     // Métricas principales
                     MainMetricsCard(meals: filteredMeals)
                     
-                    // Análisis de tendencias
-                    TrendsAnalysisCard(meals: filteredMeals, timeRange: selectedTimeRange)
+                    // ✨ NUEVA: Análisis de tendencias con gráficas dinámicas
+                    EnhancedTrendsAnalysisCard(meals: filteredMeals, timeRange: selectedTimeRange)
                     
                     // Análisis nutricional
                     NutritionalBreakdownCard(meals: filteredMeals)
@@ -210,116 +210,802 @@ struct MetricCard: View {
     }
 }
 
-// MARK: - Trends Analysis Card
-struct TrendsAnalysisCard: View {
+// MARK: - Enhanced Trends Analysis Card con Gráficas Dinámicas
+struct EnhancedTrendsAnalysisCard: View {
     let meals: [Meal]
     let timeRange: TimeRange
+    @State private var selectedChartType: ChartType = .glucose
+    @State private var showingChartDetails = false
     
-    private var glucoseDataPoints: [GlucoseDataPoint] {
-        let calendar = Calendar.current
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "dd/MM"
+    enum ChartType: String, CaseIterable, Identifiable {
+        case glucose = "Glucosa"
+        case carbs = "Carbohidratos"
+        case calories = "Calorías"
+        case glycemic = "Impacto Glucémico"
+        case categories = "Categorías"
         
-        let glucoseMeals = meals.compactMap { meal -> (Date, Double)? in
-            guard let glucose = meal.glucoseLevel else { return nil }
-            return (meal.date, glucose)
-        }.sorted { $0.0 < $1.0 }
+        var id: String { rawValue }
         
-        let maxValue: Double = 200
+        var icon: String {
+            switch self {
+            case .glucose: return "drop.fill"
+            case .carbs: return "leaf.fill"
+            case .calories: return "flame.fill"
+            case .glycemic: return "chart.line.uptrend.xyaxis"
+            case .categories: return "chart.pie.fill"
+            }
+        }
         
-        return glucoseMeals.prefix(10).map { date, glucose in
-            let normalizedWidth = (glucose / maxValue) * 180
-            let color: Color = {
-                switch glucose {
-                case 70...99: return .green
-                case 100...125: return .orange
-                default: return .red
-                }
-            }()
-            
-            return GlucoseDataPoint(
-                date: dateFormatter.string(from: date),
-                value: glucose,
-                width: normalizedWidth,
-                color: color
-            )
+        var color: Color {
+            switch self {
+            case .glucose: return .red
+            case .carbs: return .orange
+            case .calories: return .blue
+            case .glycemic: return .purple
+            case .categories: return .green
+            }
         }
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Image(systemName: "chart.line.uptrend.xyaxis")
-                    .foregroundColor(.green)
-                Text("Análisis de Tendencias")
-                    .font(.headline)
-                    .fontWeight(.semibold)
-            }
+        VStack(alignment: .leading, spacing: 20) {
+            // Header con selector de gráfica
+            ChartHeaderSection()
             
-            if glucoseDataPoints.isEmpty {
-                VStack(spacing: 12) {
-                    Image(systemName: "chart.line.downtrend.xyaxis")
-                        .font(.title)
-                        .foregroundColor(.gray)
-                    
-                    Text("No hay suficientes datos de glucosa")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                    
-                    Text("Registra comidas con niveles de glucosa para ver tendencias")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 20)
-            } else {
-                VStack(spacing: 12) {
-                    ForEach(glucoseDataPoints.indices, id: \.self) { index in
-                        let dataPoint = glucoseDataPoints[index]
-                        HStack(spacing: 12) {
-                            Text(dataPoint.date)
-                                .font(.caption)
-                                .frame(width: 50, alignment: .leading)
-                                .foregroundColor(.secondary)
-                            
-                            ZStack(alignment: .leading) {
-                                RoundedRectangle(cornerRadius: 4)
-                                    .fill(Color.gray.opacity(0.2))
-                                    .frame(height: 8)
-                                
-                                RoundedRectangle(cornerRadius: 4)
-                                    .fill(dataPoint.color)
-                                    .frame(width: dataPoint.width, height: 8)
-                            }
-                            
-                            Text("\(Int(dataPoint.value))")
-                                .font(.caption)
-                                .fontWeight(.semibold)
-                                .foregroundColor(dataPoint.color)
-                                .frame(width: 40, alignment: .trailing)
-                            
-                            Text("mg/dL")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                                .frame(width: 35, alignment: .leading)
-                        }
-                    }
-                }
-            }
+            // Gráfica principal dinámica
+            DynamicChartSection()
+            
+            // Resumen estadístico
+            ChartSummarySection()
         }
         .padding()
         .background(Color(.systemBackground))
         .cornerRadius(15)
         .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
     }
+    
+    // MARK: - Header Section
+    @ViewBuilder
+    private func ChartHeaderSection() -> some View {
+        VStack(spacing: 16) {
+            HStack {
+                Image(systemName: "chart.xyaxis.line")
+                    .foregroundColor(.blue)
+                Text("Análisis de Tendencias Dinámico")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                Spacer()
+                
+                Button(action: { showingChartDetails.toggle() }) {
+                    Image(systemName: "info.circle")
+                        .foregroundColor(.blue)
+                }
+            }
+            
+            // Selector de tipo de gráfica
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(ChartType.allCases) { chartType in
+                        ChartTypeButton(
+                            chartType: chartType,
+                            isSelected: selectedChartType == chartType,
+                            action: {
+                                withAnimation(.easeInOut(duration: 0.3)) {
+                                    selectedChartType = chartType
+                                }
+                            }
+                        )
+                    }
+                }
+                .padding(.horizontal, 4)
+            }
+        }
+    }
+    
+    // MARK: - Dynamic Chart Section
+    @ViewBuilder
+    private func DynamicChartSection() -> some View {
+        VStack(spacing: 16) {
+            // Título del gráfico actual
+            HStack {
+                Image(systemName: selectedChartType.icon)
+                    .foregroundColor(selectedChartType.color)
+                Text("Tendencia de \(selectedChartType.rawValue)")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                Spacer()
+                Text("\(timeRange.rawValue)")
+                    .font(.caption)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(selectedChartType.color.opacity(0.1))
+                    .foregroundColor(selectedChartType.color)
+                    .cornerRadius(8)
+            }
+            
+            // Gráfica dinámica SIN usar Swift Charts (para compatibilidad)
+            Group {
+                switch selectedChartType {
+                case .glucose:
+                    CustomGlucoseTrendChart(meals: meals)
+                case .carbs:
+                    CustomCarbsTrendChart(meals: meals)
+                case .calories:
+                    CustomCaloriesTrendChart(meals: meals)
+                case .glycemic:
+                    CustomGlycemicImpactChart(meals: meals)
+                case .categories:
+                    CustomFoodCategoriesChart(meals: meals)
+                }
+            }
+            .frame(height: 250)
+            .animation(.easeInOut(duration: 0.5), value: selectedChartType)
+        }
+    }
+    
+    // MARK: - Chart Summary Section
+    @ViewBuilder
+    private func ChartSummarySection() -> some View {
+        VStack(spacing: 12) {
+            HStack {
+                Image(systemName: "chart.bar.doc.horizontal")
+                    .foregroundColor(.gray)
+                Text("Resumen Estadístico")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                Spacer()
+            }
+            
+            LazyVGrid(columns: [
+                GridItem(.flexible()),
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ], spacing: 12) {
+                StatSummaryCard(
+                    title: summaryStats.title1,
+                    value: summaryStats.value1,
+                    color: selectedChartType.color
+                )
+                StatSummaryCard(
+                    title: summaryStats.title2,
+                    value: summaryStats.value2,
+                    color: selectedChartType.color.opacity(0.7)
+                )
+                StatSummaryCard(
+                    title: summaryStats.title3,
+                    value: summaryStats.value3,
+                    color: selectedChartType.color.opacity(0.4)
+                )
+            }
+        }
+        .padding(.top, 8)
+    }
+    
+    // MARK: - Summary Statistics Calculator
+    private var summaryStats: (title1: String, value1: String, title2: String, value2: String, title3: String, value3: String) {
+        switch selectedChartType {
+        case .glucose:
+            let glucoseValues = meals.compactMap { $0.glucoseLevel }
+            let avg = glucoseValues.isEmpty ? 0 : glucoseValues.reduce(0, +) / Double(glucoseValues.count)
+            let max = glucoseValues.max() ?? 0
+            let min = glucoseValues.min() ?? 0
+            return ("Promedio", "\(Int(avg)) mg/dL", "Máximo", "\(Int(max)) mg/dL", "Mínimo", "\(Int(min)) mg/dL")
+            
+        case .carbs:
+            let carbValues = meals.compactMap { $0.totalCarbs }
+            let total = carbValues.reduce(0, +)
+            let avg = carbValues.isEmpty ? 0 : total / Double(carbValues.count)
+            let max = carbValues.max() ?? 0
+            return ("Total", "\(Int(total))g", "Promedio", "\(Int(avg))g", "Máximo", "\(Int(max))g")
+            
+        case .calories:
+            let aiMeals = meals.filter { $0.name.hasPrefix("🧠") }
+            let totalEstimated = aiMeals.count * 300
+            let avgEstimated = aiMeals.isEmpty ? 0 : totalEstimated / aiMeals.count
+            return ("Total Est.", "\(totalEstimated) kcal", "Promedio", "\(avgEstimated) kcal", "Comidas IA", "\(aiMeals.count)")
+            
+        case .glycemic:
+            let aiMeals = meals.filter { $0.name.hasPrefix("🧠") }
+            let highImpact = aiMeals.filter { meal in
+                return meal.name.lowercased().contains("pizza") ||
+                       meal.name.lowercased().contains("pasta") ||
+                       meal.name.lowercased().contains("pan") ||
+                       meal.name.lowercased().contains("arroz")
+            }.count
+            return ("Alto Impacto", "\(highImpact)", "Bajo Impacto", "\(aiMeals.count - highImpact)", "Total IA", "\(aiMeals.count)")
+            
+        case .categories:
+            let breakfast = meals.filter { $0.type == .breakfast }.count
+            let lunch = meals.filter { $0.type == .lunch }.count
+            let dinner = meals.filter { $0.type == .dinner }.count
+            return ("Desayuno", "\(breakfast)", "Almuerzo", "\(lunch)", "Cena", "\(dinner)")
+        }
+    }
 }
 
-struct GlucoseDataPoint {
-    let date: String
-    let value: Double
-    let width: Double
+// MARK: - Chart Type Button
+struct ChartTypeButton: View {
+    let chartType: EnhancedTrendsAnalysisCard.ChartType
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: chartType.icon)
+                    .font(.caption)
+                Text(chartType.rawValue)
+                    .font(.caption)
+                    .fontWeight(.medium)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(
+                isSelected ? chartType.color : Color.clear
+            )
+            .foregroundColor(
+                isSelected ? .white : chartType.color
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(chartType.color, lineWidth: 1)
+            )
+            .cornerRadius(20)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+// MARK: - Custom Charts (SIN Swift Charts para compatibilidad)
+
+struct CustomGlucoseTrendChart: View {
+    let meals: [Meal]
+    
+    private var glucoseData: [ChartDataPoint] {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "dd/MM"
+        
+        return meals.compactMap { meal -> ChartDataPoint? in
+            guard let glucose = meal.glucoseLevel else { return nil }
+            return ChartDataPoint(
+                date: meal.date,
+                value: glucose,
+                formattedDate: dateFormatter.string(from: meal.date),
+                color: glucoseColor(for: glucose)
+            )
+        }
+        .sorted { $0.date < $1.date }
+        .suffix(10)
+        .map { $0 }
+    }
+    
+    var body: some View {
+        if glucoseData.isEmpty {
+            EmptyChartView(
+                icon: "drop.fill",
+                message: "No hay datos de glucosa para mostrar",
+                color: .red
+            )
+        } else {
+            VStack(spacing: 12) {
+                // Gráfica de líneas personalizada
+                GeometryReader { geometry in
+                    let width = geometry.size.width - 60
+                    let height = geometry.size.height - 40
+                    let maxValue = glucoseData.map { $0.value }.max() ?? 200
+                    let minValue = max(glucoseData.map { $0.value }.min() ?? 70, 50)
+                    
+                    ZStack {
+                        // Grid lines
+                        ForEach(0..<5) { i in
+                            let y = height * CGFloat(i) / 4
+                            Path { path in
+                                path.move(to: CGPoint(x: 30, y: y + 20))
+                                path.addLine(to: CGPoint(x: width + 30, y: y + 20))
+                            }
+                            .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
+                        }
+                        
+                        // Línea de tendencia
+                        if glucoseData.count > 1 {
+                            Path { path in
+                                for (index, dataPoint) in glucoseData.enumerated() {
+                                    let x = 30 + (width * CGFloat(index) / CGFloat(glucoseData.count - 1))
+                                    let normalizedValue = (dataPoint.value - minValue) / (maxValue - minValue)
+                                    let y = height - (height * normalizedValue) + 20
+                                    
+                                    if index == 0 {
+                                        path.move(to: CGPoint(x: x, y: y))
+                                    } else {
+                                        path.addLine(to: CGPoint(x: x, y: y))
+                                    }
+                                }
+                            }
+                            .stroke(Color.red, lineWidth: 2)
+                        }
+                        
+                        // Puntos de datos
+                        ForEach(glucoseData.indices, id: \.self) { index in
+                            let dataPoint = glucoseData[index]
+                            let x = 30 + (width * CGFloat(index) / CGFloat(max(glucoseData.count - 1, 1)))
+                            let normalizedValue = (dataPoint.value - minValue) / (maxValue - minValue)
+                            let y = height - (height * normalizedValue) + 20
+                            
+                            Circle()
+                                .fill(dataPoint.color)
+                                .frame(width: 8, height: 8)
+                                .position(x: x, y: y)
+                        }
+                        
+                        // Labels Y
+                        ForEach(0..<5) { i in
+                            let value = minValue + (maxValue - minValue) * Double(4 - i) / 4
+                            let y = height * CGFloat(i) / 4 + 20
+                            
+                            Text("\(Int(value))")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                                .position(x: 15, y: y)
+                        }
+                        
+                        // Labels X
+                        ForEach(glucoseData.indices, id: \.self) { index in
+                            if index % max(glucoseData.count / 5, 1) == 0 {
+                                let dataPoint = glucoseData[index]
+                                let x = 30 + (width * CGFloat(index) / CGFloat(max(glucoseData.count - 1, 1)))
+                                
+                                Text(dataPoint.formattedDate)
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                    .rotationEffect(.degrees(-45))
+                                    .position(x: x, y: height + 35)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    private func glucoseColor(for glucose: Double) -> Color {
+        switch glucose {
+        case 0...70: return .blue
+        case 71...99: return .green
+        case 100...125: return .orange
+        default: return .red
+        }
+    }
+}
+
+struct CustomCarbsTrendChart: View {
+    let meals: [Meal]
+    
+    private var carbsData: [ChartDataPoint] {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "dd/MM"
+        
+        return meals.compactMap { meal -> ChartDataPoint? in
+            guard let carbs = meal.totalCarbs else { return nil }
+            return ChartDataPoint(
+                date: meal.date,
+                value: carbs,
+                formattedDate: dateFormatter.string(from: meal.date),
+                color: carbsColor(for: carbs)
+            )
+        }
+        .sorted { $0.date < $1.date }
+        .suffix(12)
+        .map { $0 }
+    }
+    
+    var body: some View {
+        if carbsData.isEmpty {
+            EmptyChartView(
+                icon: "leaf.fill",
+                message: "No hay datos de carbohidratos",
+                color: .orange
+            )
+        } else {
+            GeometryReader { geometry in
+                let width = geometry.size.width - 60
+                let height = geometry.size.height - 40
+                let maxValue = carbsData.map { $0.value }.max() ?? 100
+                
+                HStack(alignment: .bottom, spacing: max(2, width / CGFloat(carbsData.count) - 8)) {
+                    ForEach(carbsData.indices, id: \.self) { index in
+                        let dataPoint = carbsData[index]
+                        let barHeight = (dataPoint.value / maxValue) * height
+                        
+                        VStack(spacing: 4) {
+                            Spacer()
+                            
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(dataPoint.color.gradient)
+                                .frame(width: 20, height: barHeight)
+                            
+                            if index % max(carbsData.count / 4, 1) == 0 {
+                                Text(dataPoint.formattedDate)
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                    .rotationEffect(.degrees(-45))
+                            }
+                        }
+                    }
+                }
+                .padding(.horizontal, 30)
+                .padding(.bottom, 20)
+            }
+        }
+    }
+    
+    private func carbsColor(for carbs: Double) -> Color {
+        switch carbs {
+        case 0...20: return .green
+        case 21...40: return .yellow
+        case 41...60: return .orange
+        default: return .red
+        }
+    }
+}
+
+struct CustomCaloriesTrendChart: View {
+    let meals: [Meal]
+    
+    private var caloriesData: [ChartDataPoint] {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "dd/MM"
+        
+        let aiMeals = meals.filter { $0.name.hasPrefix("🧠") }
+        
+        return aiMeals.map { meal -> ChartDataPoint in
+            let estimatedCalories = estimateCaloriesFromFoodName(meal.name)
+            return ChartDataPoint(
+                date: meal.date,
+                value: estimatedCalories,
+                formattedDate: dateFormatter.string(from: meal.date),
+                color: .blue
+            )
+        }
+        .sorted { $0.date < $1.date }
+        .suffix(10)
+        .map { $0 }
+    }
+    
+    var body: some View {
+        if caloriesData.isEmpty {
+            EmptyChartView(
+                icon: "flame.fill",
+                message: "No hay comidas analizadas con IA",
+                color: .blue
+            )
+        } else {
+            GeometryReader { geometry in
+                let width = geometry.size.width - 60
+                let height = geometry.size.height - 40
+                let maxValue = caloriesData.map { $0.value }.max() ?? 500
+                
+                ZStack {
+                    // Área bajo la curva
+                    if caloriesData.count > 1 {
+                        Path { path in
+                            let startX: CGFloat = 30
+                            let startY = height + 20
+                            path.move(to: CGPoint(x: startX, y: startY))
+                            
+                            for (index, dataPoint) in caloriesData.enumerated() {
+                                let x = 30 + (width * CGFloat(index) / CGFloat(caloriesData.count - 1))
+                                let normalizedValue = dataPoint.value / maxValue
+                                let y = height - (height * normalizedValue) + 20
+                                path.addLine(to: CGPoint(x: x, y: y))
+                            }
+                            
+                            let endX = 30 + width
+                            path.addLine(to: CGPoint(x: endX, y: startY))
+                            path.closeSubpath()
+                        }
+                        .fill(LinearGradient(
+                            gradient: Gradient(colors: [Color.blue.opacity(0.3), Color.blue.opacity(0.1)]),
+                            startPoint: .top,
+                            endPoint: .bottom
+                        ))
+                    }
+                    
+                    // Línea principal
+                    if caloriesData.count > 1 {
+                        Path { path in
+                            for (index, dataPoint) in caloriesData.enumerated() {
+                                let x = 30 + (width * CGFloat(index) / CGFloat(caloriesData.count - 1))
+                                let normalizedValue = dataPoint.value / maxValue
+                                let y = height - (height * normalizedValue) + 20
+                                
+                                if index == 0 {
+                                    path.move(to: CGPoint(x: x, y: y))
+                                } else {
+                                    path.addLine(to: CGPoint(x: x, y: y))
+                                }
+                            }
+                        }
+                        .stroke(Color.blue, lineWidth: 2)
+                    }
+                }
+            }
+        }
+    }
+    
+    private func estimateCaloriesFromFoodName(_ name: String) -> Double {
+        let lowercaseName = name.lowercased()
+        
+        switch true {
+        case lowercaseName.contains("ensalada"):
+            return 150
+        case lowercaseName.contains("pollo"):
+            return 250
+        case lowercaseName.contains("pizza"):
+            return 350
+        case lowercaseName.contains("hamburguesa"):
+            return 450
+        case lowercaseName.contains("pasta"):
+            return 300
+        case lowercaseName.contains("arroz"):
+            return 200
+        case lowercaseName.contains("fruta") || lowercaseName.contains("manzana"):
+            return 80
+        case lowercaseName.contains("verdura"):
+            return 50
+        case lowercaseName.contains("postre") || lowercaseName.contains("pastel"):
+            return 400
+        default:
+            return 250
+        }
+    }
+}
+
+struct CustomGlycemicImpactChart: View {
+    let meals: [Meal]
+    
+    private var glycemicData: [ChartDataPoint] {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "dd/MM"
+        
+        return meals.map { meal -> ChartDataPoint in
+            let impact = calculateGlycemicImpact(for: meal)
+            return ChartDataPoint(
+                date: meal.date,
+                value: impact.value,
+                formattedDate: dateFormatter.string(from: meal.date),
+                color: impact.color
+            )
+        }
+        .sorted { $0.date < $1.date }
+        .suffix(10)
+        .map { $0 }
+    }
+    
+    var body: some View {
+        if glycemicData.isEmpty {
+            EmptyChartView(
+                icon: "chart.line.uptrend.xyaxis",
+                message: "No hay datos de impacto glucémico",
+                color: .purple
+            )
+        } else {
+            GeometryReader { geometry in
+                let width = geometry.size.width - 60
+                let height = geometry.size.height - 40
+                
+                HStack(alignment: .bottom, spacing: max(2, width / CGFloat(glycemicData.count) - 8)) {
+                    ForEach(glycemicData.indices, id: \.self) { index in
+                        let dataPoint = glycemicData[index]
+                        let barHeight = (dataPoint.value / 25.0) * height
+                        
+                        VStack(spacing: 4) {
+                            Spacer()
+                            
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(dataPoint.color.gradient)
+                                .frame(width: 20, height: barHeight)
+                            
+                            if index % max(glycemicData.count / 4, 1) == 0 {
+                                Text(dataPoint.formattedDate)
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                    .rotationEffect(.degrees(-45))
+                            }
+                        }
+                    }
+                }
+                .padding(.horizontal, 30)
+                .padding(.bottom, 20)
+            }
+        }
+    }
+    
+    private func calculateGlycemicImpact(for meal: Meal) -> (value: Double, color: Color) {
+        let foodName = meal.name.lowercased()
+        var impact: Double = 5.0
+        
+        switch true {
+        case foodName.contains("pizza"), foodName.contains("pasta"):
+            impact = 18.0
+        case foodName.contains("arroz"), foodName.contains("papas"):
+            impact = 15.0
+        case foodName.contains("hamburguesa"):
+            impact = 12.0
+        case foodName.contains("pollo"), foodName.contains("carne"):
+            impact = 2.0
+        case foodName.contains("ensalada"), foodName.contains("verdura"):
+            impact = 1.0
+        case foodName.contains("fruta"):
+            impact = 8.0
+        case foodName.contains("postre"), foodName.contains("pastel"):
+            impact = 20.0
+        default:
+            impact = 10.0
+        }
+        
+        if let carbs = meal.totalCarbs {
+            impact += carbs * 0.3
+        }
+        
+        let color: Color
+        switch impact {
+        case 0...7: color = .green
+        case 8...15: color = .orange
+        default: color = .red
+        }
+        
+        return (min(impact, 25), color)
+    }
+}
+
+struct CustomFoodCategoriesChart: View {
+    let meals: [Meal]
+    
+    private var categoryData: [(category: String, count: Int, color: Color)] {
+        let mealTypeCounts = Dictionary(grouping: meals, by: { $0.type })
+            .mapValues { $0.count }
+        
+        return MealType.allCases.compactMap { mealType in
+            let count = mealTypeCounts[mealType] ?? 0
+            guard count > 0 else { return nil }
+            return (mealType.rawValue, count, mealTypeColor(for: mealType))
+        }
+    }
+    
+    var body: some View {
+        if categoryData.isEmpty {
+            EmptyChartView(
+                icon: "chart.pie.fill",
+                message: "No hay datos de categorías",
+                color: .green
+            )
+        } else {
+            GeometryReader { geometry in
+                let center = CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2)
+                let radius: CGFloat = min(geometry.size.width, geometry.size.height) / 3
+                let total = categoryData.reduce(0) { $0 + $1.count }
+                
+                ZStack {
+                    // Gráfica de dona
+                    ForEach(categoryData.indices, id: \.self) { index in
+                        let data = categoryData[index]
+                        let startAngle = categoryData.prefix(index).reduce(0) { result, item in
+                            result + (Double(item.count) / Double(total)) * 360
+                        }
+                        let endAngle = startAngle + (Double(data.count) / Double(total)) * 360
+                        
+                        PieSlice(
+                            startAngle: Angle(degrees: startAngle),
+                            endAngle: Angle(degrees: endAngle),
+                            innerRadius: radius * 0.6,
+                            outerRadius: radius
+                        )
+                        .fill(data.color.gradient)
+                    }
+                    
+                    // Centro con información
+                    VStack {
+                        Text("Total")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Text("\(meals.count)")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                        Text("comidas")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+        }
+    }
+    
+    private func mealTypeColor(for mealType: MealType) -> Color {
+        switch mealType {
+        case .breakfast: return .orange
+        case .lunch: return .blue
+        case .dinner: return .purple
+        case .snack: return .green
+        }
+    }
+}
+
+// MARK: - Supporting Views y Data Models
+
+struct EmptyChartView: View {
+    let icon: String
+    let message: String
     let color: Color
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.title)
+                .foregroundColor(color.opacity(0.6))
+            
+            Text(message)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+            
+            Text("Registra más comidas para ver tendencias")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+struct StatSummaryCard: View {
+    let title: String
+    let value: String
+    let color: Color
+    
+    var body: some View {
+        VStack(spacing: 4) {
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+            
+            Text(value)
+                .font(.subheadline)
+                .fontWeight(.bold)
+                .foregroundColor(color)
+                .multilineTextAlignment(.center)
+        }
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity)
+        .background(color.opacity(0.1))
+        .cornerRadius(8)
+    }
+}
+
+struct ChartDataPoint: Identifiable {
+    let id = UUID()
+    let date: Date
+    let value: Double
+    let formattedDate: String
+    let color: Color
+}
+
+struct PieSlice: Shape {
+    let startAngle: Angle
+    let endAngle: Angle
+    let innerRadius: CGFloat
+    let outerRadius: CGFloat
+    
+    func path(in rect: CGRect) -> Path {
+        let center = CGPoint(x: rect.midX, y: rect.midY)
+        
+        var path = Path()
+        path.addArc(center: center, radius: outerRadius, startAngle: startAngle, endAngle: endAngle, clockwise: false)
+        path.addArc(center: center, radius: innerRadius, startAngle: endAngle, endAngle: startAngle, clockwise: true)
+        path.closeSubpath()
+        
+        return path
+    }
 }
 
 // MARK: - Nutritional Breakdown Card

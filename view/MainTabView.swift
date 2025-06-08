@@ -14,14 +14,14 @@ struct MainTabView: View {
                     Text("Comidas")
                 }
             
-            // Tab 2: Computer Vision (¡NUEVA FUNCIONALIDAD!)
+            // Tab 2: Computer Vision con IA
             FoodAnalysisView()
                 .tabItem {
                     Image(systemName: "camera.viewfinder")
                     Text("IA Análisis")
                 }
             
-            // Tab 3: Insights y Gráficas
+            // Tab 3: Insights y Gráficas Dinámicas ✨
             InsightsView()
                 .tabItem {
                     Image(systemName: "chart.line.uptrend.xyaxis")

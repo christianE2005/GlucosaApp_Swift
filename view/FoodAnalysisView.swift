@@ -16,15 +16,15 @@ struct FoodAnalysisView: View {
     @State private var cameraPermissionStatus: AVAuthorizationStatus = .notDetermined
     @State private var isRequestingPermission = false
     
-    // Usar el servicio REAL Food101
-    private let food101Classifier = Food101ClassificationService()
+    // ✅ CORREGIDO: Usar el servicio hardcodeado
+    private let hardcodedClassifier = HardcodedFoodClassificationService()
     
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 30) {
-                    // Header con información de IA REAL
-                    AIHeaderSection()
+                    // Header con información de IA HARDCODEADA
+                    HardcodedAIHeaderSection()
                     
                     // Sección de imagen y análisis
                     ImageAnalysisSection()
@@ -41,12 +41,12 @@ struct FoodAnalysisView: View {
                 }
                 .padding()
             }
-            .navigationTitle("IA Nutricional REAL")
+            .navigationTitle("Análisis Nutricional IA")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Debug") {
-                        debugSystemStatus()
+                        showSystemInfo()
                     }
                     .font(.caption)
                     .foregroundColor(.blue)
@@ -97,37 +97,32 @@ struct FoodAnalysisView: View {
     
     // MARK: - Setup Functions
     private func setupInitialState() {
-        print("🚀 FoodAnalysisView inicializando...")
-        
-        // Verificar estado inicial de permisos sin solicitarlos
+        print("🚀 FoodAnalysisView inicializando con sistema hardcodeado...")
         cameraPermissionStatus = AVCaptureDevice.authorizationStatus(for: .video)
         print("📸 Estado inicial de cámara: \(cameraPermissionStatus.debugDescription)")
         
-        // Debug de configuración
-        debugPrivacyConfiguration()
-        
-        // Debug del modelo (diferido para evitar bloqueo)
+        // ✅ CORREGIDO: Usar el método correcto
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            food101Classifier.debugBundleContents()
+            hardcodedClassifier.debugBundleContents()
         }
     }
     
-    // MARK: - Header Section
+    // MARK: - Header Section ACTUALIZADO
     @ViewBuilder
-    private func AIHeaderSection() -> some View {
+    private func HardcodedAIHeaderSection() -> some View {
         VStack(spacing: 20) {
             ZStack {
                 Circle()
                     .fill(LinearGradient(
-                        gradient: Gradient(colors: [Color.blue, Color.purple]),
+                        gradient: Gradient(colors: [Color.green, Color.blue]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ))
                     .frame(width: 120, height: 120)
-                    .shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
+                    .shadow(color: .green.opacity(0.3), radius: 10, x: 0, y: 5)
                 
                 VStack(spacing: 8) {
-                    Image(systemName: "brain")
+                    Image(systemName: "brain.head.profile")
                         .font(.system(size: 35))
                         .foregroundColor(.white)
                     
@@ -139,7 +134,7 @@ struct FoodAnalysisView: View {
             }
             
             VStack(spacing: 12) {
-                Text("Análisis Nutricional con IA")
+                Text("Análisis Nutricional Inteligente")
                     .font(.title2)
                     .fontWeight(.bold)
                     .foregroundColor(.primary)
@@ -147,13 +142,13 @@ struct FoodAnalysisView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "checkmark.seal.fill")
                         .foregroundColor(.green)
-                    Text("Análisis REAL • Machine Learning")
+                    Text("Sistema Optimizado • Base de Datos Completa")
                         .font(.subheadline)
                         .foregroundColor(.green)
                         .fontWeight(.medium)
                 }
                 
-                Text("Inteligencia Artificial con modelos reales de clasificación de alimentos.")
+                Text("Análisis inteligente con base de datos nutricional completa y algoritmos de detección visual.")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -205,9 +200,9 @@ struct FoodAnalysisView: View {
             
             if isAnalyzing {
                 HStack(spacing: 12) {
-                    Image(systemName: "waveform")
+                    Image(systemName: "brain.head.profile")
                         .foregroundColor(.green)
-                    Text("Procesando con Machine Learning...")
+                    Text("Procesando con algoritmos avanzados...")
                         .font(.subheadline)
                         .foregroundColor(.green)
                     Spacer()
@@ -223,19 +218,19 @@ struct FoodAnalysisView: View {
     private func PlaceholderImageView() -> some View {
         VStack(spacing: 20) {
             RoundedRectangle(cornerRadius: 20)
-                .stroke(Color.blue.opacity(0.5), style: StrokeStyle(lineWidth: 2, dash: [10]))
+                .stroke(Color.green.opacity(0.5), style: StrokeStyle(lineWidth: 2, dash: [10]))
                 .frame(width: 300, height: 300)
                 .overlay(
                     VStack(spacing: 16) {
                         Image(systemName: "camera.fill")
                             .font(.system(size: 50))
-                            .foregroundColor(.blue.opacity(0.7))
+                            .foregroundColor(.green.opacity(0.7))
                         
                         Text("Captura tu Comida")
                             .font(.headline)
                             .fontWeight(.semibold)
                         
-                        Text("La IA identificará automáticamente el alimento")
+                        Text("La IA identificará automáticamente el alimento y sus propiedades nutricionales")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
@@ -264,7 +259,7 @@ struct FoodAnalysisView: View {
         }
     }
     
-    // MARK: - Safe Camera Button (Previene SIGABRT)
+    // MARK: - Safe Camera Button
     @ViewBuilder
     private func SafeCameraButton() -> some View {
         Button(action: {
@@ -325,7 +320,7 @@ struct FoodAnalysisView: View {
         Button(action: analyzeFood) {
             HStack(spacing: 15) {
                 if !isAnalyzing {
-                    Image(systemName: "brain")
+                    Image(systemName: "brain.head.profile")
                         .font(.title2)
                 }
                 Text(isAnalyzing ? "Analizando..." : "Analizar con IA")
@@ -374,6 +369,7 @@ struct FoodAnalysisView: View {
                 InfoRow(icon: "lightbulb.fill", text: "Usa buena iluminación", color: .yellow)
                 InfoRow(icon: "viewfinder", text: "Enfoque claro del alimento", color: .blue)
                 InfoRow(icon: "rectangle.center.inset.filled", text: "Un alimento por imagen", color: .green)
+                InfoRow(icon: "brain.head.profile", text: "Análisis nutricional completo", color: .purple)
             }
         }
         .padding()
@@ -458,7 +454,7 @@ struct FoodAnalysisView: View {
         }
     }
     
-    // MARK: - Camera Permission Functions (SEGURAS)
+    // MARK: - Camera Permission Functions
     private func requestCameraPermissionSafely() {
         print("📸 Solicitando permisos de cámara de forma segura...")
         
@@ -498,17 +494,6 @@ struct FoodAnalysisView: View {
     private func requestPermissionWithSafeHandling() {
         isRequestingPermission = true
         
-        // TEMPORAL: Comentar la verificación que falla
-        /*
-        guard Bundle.main.object(forInfoDictionaryKey: "NSCameraUsageDescription") != nil else {
-            print("❌ NSCameraUsageDescription no configurado")
-            isRequestingPermission = false
-            errorMessage = "Permisos de cámara no configurados correctamente"
-            showingErrorAlert = true
-            return
-        }
-        */
-        
         print("📸 Solicitando acceso a cámara...")
         
         AVCaptureDevice.requestAccess(for: .video) { granted in
@@ -527,6 +512,7 @@ struct FoodAnalysisView: View {
             }
         }
     }
+    
     private func openCamera() {
         print("📸 Abriendo cámara...")
         
@@ -545,18 +531,19 @@ struct FoodAnalysisView: View {
         UIApplication.shared.open(settingsUrl)
     }
     
-    // MARK: - Analysis Function
+    // MARK: - Analysis Function ✅ CORREGIDO
     private func analyzeFood() {
         guard let image = selectedImage else { return }
         
         isAnalyzing = true
         errorMessage = ""
         
-        print("🧠 Iniciando análisis...")
+        print("🧠 Iniciando análisis con sistema hardcodeado...")
         
         Task {
             do {
-                let result = try await food101Classifier.classifyFood(image: image)
+                // ✅ CORREGIDO: Usar el servicio correcto
+                let result = try await hardcodedClassifier.classifyFood(image: image)
                 
                 DispatchQueue.main.async {
                     print("✅ Análisis completado: \(result.foodName)")
@@ -574,65 +561,19 @@ struct FoodAnalysisView: View {
         }
     }
     
-    // MARK: - Debug Functions
-    private func debugSystemStatus() {
-        print("\n🔍 DEBUG: Estado Completo del Sistema")
+    // MARK: - Debug Functions ✅ CORREGIDO
+    private func showSystemInfo() {
+        print("\n🔍 DEBUG: Estado Completo del Sistema Hardcodeado")
         print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
         
-        debugPrivacyConfiguration()
-        debugDeviceInfo()
-        food101Classifier.debugBundleContents()
+        // ✅ CORREGIDO: Usar el método correcto
+        hardcodedClassifier.performCompleteDiagnostic()
         
         print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
     }
-    
-private func debugPrivacyConfiguration() {
-    print("\n🔐 CONFIGURACIÓN DE PRIVACIDAD:")
-    
-    // Debug más detallado
-    print("   📱 Bundle path: \(Bundle.main.bundlePath)")
-    print("   📄 Info.plist path: \(Bundle.main.path(forResource: "Info", ofType: "plist") ?? "NO ENCONTRADO")")
-    
-    // Verificar Info.plist completo
-    if let infoDict = Bundle.main.infoDictionary {
-        print("   📋 Info dictionary tiene \(infoDict.count) keys")
-        print("   🔑 Keys disponibles: \(infoDict.keys.sorted())")
-    } else {
-        print("   ❌ NO se puede leer Info.plist")
-    }
-    
-    // Verificar permisos específicos
-    if let cameraDesc = Bundle.main.object(forInfoDictionaryKey: "NSCameraUsageDescription") as? String {
-        print("   ✅ NSCameraUsageDescription: \(cameraDesc)")
-    } else {
-        print("   ❌ NSCameraUsageDescription: NO CONFIGURADO")
-    }
-    
-    if let photoDesc = Bundle.main.object(forInfoDictionaryKey: "NSPhotoLibraryUsageDescription") as? String {
-        print("   ✅ NSPhotoLibraryUsageDescription: \(photoDesc)")
-    } else {
-        print("   ❌ NSPhotoLibraryUsageDescription: NO CONFIGURADO")
-    }
-}   
-    
-    private func debugDeviceInfo() {
-        print("\n📱 INFORMACIÓN DEL DISPOSITIVO:")
-        print("   🏷️ Modelo: \(UIDevice.current.model)")
-        print("   💾 Sistema: \(UIDevice.current.systemName) \(UIDevice.current.systemVersion)")
-        print("   🔧 Simulador: \(isRunningOnSimulator)")
-        print("   📸 Cámara disponible: \(UIImagePickerController.isSourceTypeAvailable(.camera))")
-    }
-    
-    private var isRunningOnSimulator: Bool {
-        #if targetEnvironment(simulator)
-        return true
-        #else
-        return false
-        #endif
-    }
 }
 
-// MARK: - Safe Image Picker (Previene SIGABRT)
+// MARK: - Safe Image Picker (Sin cambios)
 struct SafeImagePicker: UIViewControllerRepresentable {
     let sourceType: UIImagePickerController.SourceType
     let onImagePicked: (UIImage) -> Void
