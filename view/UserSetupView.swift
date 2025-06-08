@@ -12,6 +12,10 @@ struct UserSetupView: View {
     @State private var enableNotifications = true
     @State private var selectedUnits = "mg/dL"
     
+    // NUEVO: Estados para manejar focus del teclado
+    @FocusState private var ageFieldFocused: Bool
+    @FocusState private var yearFieldFocused: Bool
+    
     private let totalSteps = 3
     
     var body: some View {
@@ -32,7 +36,6 @@ struct UserSetupView: View {
                             .fontWeight(.regular)
                             .foregroundColor(.black)
                         
-                        // Barra de progreso con el estilo exacto de la imagen
                         HStack(spacing: 4) {
                             ForEach(1...totalSteps, id: \.self) { step in
                                 Rectangle()
@@ -58,6 +61,21 @@ struct UserSetupView: View {
         }
         .background(Color.white)
         .navigationBarHidden(true)
+        // NUEVO: Toolbar para campos numéricos
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Listo") {
+                    hideKeyboard()
+                }
+                .foregroundColor(.blue)
+                .fontWeight(.semibold)
+            }
+        }
+        // NUEVO: Gesture para cerrar teclado tocando fuera
+        .onTapGesture {
+            hideKeyboard()
+        }
     }
     
     @ViewBuilder
@@ -74,10 +92,10 @@ struct UserSetupView: View {
         }
     }
     
-    // MARK: - Paso 1: Información Personal (Diseño exacto de la imagen)
+    // MARK: - Paso 1: Información Personal (MEJORADO)
     private var personalInfoStep: some View {
         VStack(spacing: 0) {
-            // Ícono circular azul exacto
+            // Ícono circular azul
             ZStack {
                 Circle()
                     .fill(Color.blue)
@@ -96,7 +114,7 @@ struct UserSetupView: View {
                 .foregroundColor(.black)
                 .padding(.bottom, 60)
             
-            // Campos de entrada con estilo exacto
+            // Campos de entrada MEJORADOS
             VStack(spacing: 40) {
                 // Campo Nombre
                 VStack(alignment: .leading, spacing: 8) {
@@ -105,6 +123,8 @@ struct UserSetupView: View {
                         .foregroundColor(.black)
                         .padding(.vertical, 16)
                         .background(Color.clear)
+                        .textInputAutocapitalization(.words)
+                        .autocorrectionDisabled()
                         .overlay(
                             Rectangle()
                                 .frame(height: 1)
@@ -113,20 +133,38 @@ struct UserSetupView: View {
                         )
                 }
                 
-                // Campo Edad
+                // Campo Edad MEJORADO
                 VStack(alignment: .leading, spacing: 8) {
                     TextField("Edad", text: $age)
                         .font(.system(size: 20))
                         .foregroundColor(.black)
                         .keyboardType(.numberPad)
+                        .focused($ageFieldFocused)
                         .padding(.vertical, 16)
                         .background(Color.clear)
                         .overlay(
                             Rectangle()
                                 .frame(height: 1)
-                                .foregroundColor(Color.gray.opacity(0.4)),
+                                .foregroundColor(ageFieldFocused ? Color.blue : Color.gray.opacity(0.4)),
                             alignment: .bottom
                         )
+                        .onChange(of: age) { newValue in
+                            // Filtrar solo números y limitar a 3 dígitos
+                            let filtered = newValue.filter { $0.isNumber }
+                            if filtered.count <= 3 {
+                                age = filtered
+                            } else {
+                                age = String(filtered.prefix(3))
+                            }
+                        }
+                    
+                    // Helper text
+                    if ageFieldFocused {
+                        Text("Toca 'Listo' cuando termines")
+                            .font(.caption)
+                            .foregroundColor(.blue)
+                            .transition(.opacity)
+                    }
                 }
             }
             .padding(.horizontal, 40)
@@ -135,7 +173,7 @@ struct UserSetupView: View {
         }
     }
     
-    // MARK: - Paso 2: Información Médica
+    // MARK: - Paso 2: Información Médica (MEJORADO)
     private var medicalInfoStep: some View {
         VStack(spacing: 0) {
             // Ícono médico
@@ -157,7 +195,7 @@ struct UserSetupView: View {
                 .foregroundColor(.black)
                 .padding(.bottom, 40)
             
-            // Campos médicos
+            // Campos médicos MEJORADOS
             VStack(spacing: 30) {
                 VStack(alignment: .leading, spacing: 15) {
                     Text("Tipo de Diabetes")
@@ -181,14 +219,32 @@ struct UserSetupView: View {
                         .font(.system(size: 20))
                         .foregroundColor(.black)
                         .keyboardType(.numberPad)
+                        .focused($yearFieldFocused)
                         .padding(.vertical, 16)
                         .background(Color.clear)
                         .overlay(
                             Rectangle()
                                 .frame(height: 1)
-                                .foregroundColor(Color.gray.opacity(0.4)),
+                                .foregroundColor(yearFieldFocused ? Color.blue : Color.gray.opacity(0.4)),
                             alignment: .bottom
                         )
+                        .onChange(of: diagnosisYear) { newValue in
+                            // Filtrar solo números y limitar a 4 dígitos (año)
+                            let filtered = newValue.filter { $0.isNumber }
+                            if filtered.count <= 4 {
+                                diagnosisYear = filtered
+                            } else {
+                                diagnosisYear = String(filtered.prefix(4))
+                            }
+                        }
+                    
+                    // Helper text para año
+                    if yearFieldFocused {
+                        Text("Ejemplo: 2020 • Toca 'Listo' cuando termines")
+                            .font(.caption)
+                            .foregroundColor(.blue)
+                            .transition(.opacity)
+                    }
                 }
             }
             .padding(.horizontal, 40)
@@ -197,7 +253,7 @@ struct UserSetupView: View {
         }
     }
     
-    // MARK: - Paso 3: Preferencias
+    // MARK: - Paso 3: Preferencias (Sin cambios)
     private var preferencesStep: some View {
         VStack(spacing: 0) {
             // Ícono de configuración
@@ -244,13 +300,15 @@ struct UserSetupView: View {
         }
     }
     
-    // MARK: - Botón de navegación (estilo exacto)
+    // MARK: - Botón de navegación
     @ViewBuilder
     private var navigationButton: some View {
         HStack {
             Spacer()
             
             Button(action: {
+                hideKeyboard() // Cerrar teclado antes de navegar
+                
                 if currentStep < totalSteps {
                     withAnimation(.easeInOut(duration: 0.3)) {
                         currentStep += 1
@@ -273,19 +331,32 @@ struct UserSetupView: View {
         }
     }
     
-    // MARK: - Validaciones
+    // MARK: - Validaciones MEJORADAS
     private var canContinue: Bool {
         switch currentStep {
         case 1:
-            return !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-                   !age.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            let nameValid = !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            let ageValid = !age.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && 
+                          (Int(age) ?? 0) > 0 && (Int(age) ?? 0) < 150
+            return nameValid && ageValid
         case 2:
-            return !diagnosisYear.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            let yearValid = !diagnosisYear.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && 
+                           diagnosisYear.count == 4 && 
+                           (Int(diagnosisYear) ?? 0) >= 1950 && 
+                           (Int(diagnosisYear) ?? 0) <= Calendar.current.component(.year, from: Date())
+            return yearValid
         case 3:
             return true
         default:
             return false
         }
+    }
+    
+    // MARK: - Helper Functions
+    private func hideKeyboard() {
+        ageFieldFocused = false
+        yearFieldFocused = false
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
     
     // MARK: - Guardar perfil

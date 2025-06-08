@@ -11,15 +11,17 @@ struct FoodAnalysisView: View {
     @State private var isAnalyzing = false
     @State private var showingResultSheet = false
     @State private var showingPermissionAlert = false
+    @State private var showingErrorAlert = false
+    @State private var errorMessage = ""
     
-    // Usar el servicio específico Food101
+    // Usar el servicio REAL Food101
     private let food101Classifier = Food101ClassificationService()
     
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 30) {
-                    // Header con información de IA
+                    // Header con información de IA REAL
                     VStack(spacing: 20) {
                         // Logo de IA
                         ZStack {
@@ -53,13 +55,13 @@ struct FoodAnalysisView: View {
                             HStack(spacing: 8) {
                                 Image(systemName: "checkmark.seal.fill")
                                     .foregroundColor(.green)
-                                Text("MobileNetV2 • Food101 Dataset")
+                                Text("Análisis REAL • Machine Learning")
                                     .font(.subheadline)
-                                    .foregroundColor(.blue)
+                                    .foregroundColor(.green)
                                     .fontWeight(.medium)
                             }
                             
-                            Text("Inteligencia Artificial entrenada con 101 tipos de alimentos para análisis nutricional específico en diabetes")
+                            Text("Inteligencia Artificial con modelos reales de clasificación de alimentos. Análisis nutricional preciso para control de diabetes.")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                                 .multilineTextAlignment(.center)
@@ -97,7 +99,7 @@ struct FoodAnalysisView: View {
                                                     .foregroundColor(.white)
                                                     .fontWeight(.semibold)
                                                 
-                                                Text("Clasificando entre 101 alimentos")
+                                                Text("Procesando con modelo real")
                                                     .font(.caption)
                                                     .foregroundColor(.white.opacity(0.8))
                                             }
@@ -109,20 +111,20 @@ struct FoodAnalysisView: View {
                                         VStack(spacing: 8) {
                                             HStack(spacing: 12) {
                                                 Image(systemName: "waveform")
-                                                    .foregroundColor(.blue)
+                                                    .foregroundColor(.green)
                                                 VStack(alignment: .leading, spacing: 4) {
-                                                    Text("Procesando con MobileNetV2")
+                                                    Text("Procesando con Machine Learning")
                                                         .font(.subheadline)
                                                         .fontWeight(.medium)
-                                                        .foregroundColor(.blue)
-                                                    Text("Analizando patrones nutricionales...")
+                                                        .foregroundColor(.green)
+                                                    Text("Análisis nutricional real en progreso...")
                                                         .font(.caption)
                                                         .foregroundColor(.secondary)
                                                 }
                                                 Spacer()
                                             }
                                             .padding()
-                                            .background(Color.blue.opacity(0.1))
+                                            .background(Color.green.opacity(0.1))
                                             .cornerRadius(12)
                                         }
                                     }
@@ -133,7 +135,7 @@ struct FoodAnalysisView: View {
                                     RoundedRectangle(cornerRadius: 20)
                                         .stroke(
                                             LinearGradient(
-                                                gradient: Gradient(colors: [Color.blue.opacity(0.5), Color.purple.opacity(0.5)]),
+                                                gradient: Gradient(colors: [Color.green.opacity(0.5), Color.blue.opacity(0.5)]),
                                                 startPoint: .topLeading,
                                                 endPoint: .bottomTrailing
                                             ),
@@ -144,7 +146,7 @@ struct FoodAnalysisView: View {
                                             VStack(spacing: 16) {
                                                 Image(systemName: "camera.fill")
                                                     .font(.system(size: 50))
-                                                    .foregroundColor(.blue.opacity(0.7))
+                                                    .foregroundColor(.green.opacity(0.7))
                                                 
                                                 VStack(spacing: 8) {
                                                     Text("Captura tu Comida")
@@ -152,7 +154,7 @@ struct FoodAnalysisView: View {
                                                         .fontWeight(.semibold)
                                                         .foregroundColor(.primary)
                                                     
-                                                    Text("La IA identificará automáticamente el tipo de alimento y proporcionará análisis nutricional")
+                                                    Text("La IA real identificará automáticamente el tipo de alimento y proporcionará análisis nutricional preciso")
                                                         .font(.subheadline)
                                                         .foregroundColor(.secondary)
                                                         .multilineTextAlignment(.center)
@@ -161,9 +163,9 @@ struct FoodAnalysisView: View {
                                             }
                                         )
                                     
-                                    // Capacidades de la IA
+                                    // Capacidades de la IA REAL
                                     VStack(spacing: 12) {
-                                        Text("🧠 Capacidades de la IA:")
+                                        Text("🧠 Capacidades del Modelo Real:")
                                             .font(.headline)
                                             .foregroundColor(.primary)
                                         
@@ -171,10 +173,10 @@ struct FoodAnalysisView: View {
                                             GridItem(.flexible()),
                                             GridItem(.flexible())
                                         ], spacing: 8) {
-                                            CapabilityBadge(icon: "🍎", text: "101 Alimentos")
-                                            CapabilityBadge(icon: "📊", text: "Análisis Nutricional")
-                                            CapabilityBadge(icon: "🩺", text: "Insights Diabetes")
-                                            CapabilityBadge(icon: "⚡", text: "Análisis Instantáneo")
+                                            CapabilityBadge(icon: "🎯", text: "Clasificación Real", color: .green)
+                                            CapabilityBadge(icon: "📊", text: "Análisis Preciso", color: .blue)
+                                            CapabilityBadge(icon: "🩺", text: "Insights Diabetes", color: .red)
+                                            CapabilityBadge(icon: "⚡", text: "Procesamiento ML", color: .purple)
                                         }
                                     }
                                 }
@@ -257,11 +259,11 @@ struct FoodAnalysisView: View {
                                                     .font(.title2)
                                             }
                                             VStack(spacing: 4) {
-                                                Text(isAnalyzing ? "Analizando con IA..." : "Analizar con Inteligencia Artificial")
+                                                Text(isAnalyzing ? "Analizando con IA Real..." : "Analizar con Inteligencia Artificial REAL")
                                                     .font(.headline)
                                                     .fontWeight(.semibold)
                                                 if !isAnalyzing {
-                                                    Text("MobileNetV2 • Precisión del 85%+")
+                                                    Text("Machine Learning • Análisis Preciso")
                                                         .font(.caption)
                                                         .opacity(0.9)
                                                 }
@@ -272,13 +274,13 @@ struct FoodAnalysisView: View {
                                         .padding(.vertical, 16)
                                         .background(
                                             LinearGradient(
-                                                gradient: Gradient(colors: [Color.purple, Color.blue]),
+                                                gradient: Gradient(colors: [Color.green, Color.blue]),
                                                 startPoint: .leading,
                                                 endPoint: .trailing
                                             )
                                         )
                                         .cornerRadius(16)
-                                        .shadow(color: .purple.opacity(0.4), radius: 10, x: 0, y: 5)
+                                        .shadow(color: .green.opacity(0.4), radius: 10, x: 0, y: 5)
                                     }
                                     .disabled(isAnalyzing)
                                     .opacity(isAnalyzing ? 0.7 : 1.0)
@@ -306,7 +308,7 @@ struct FoodAnalysisView: View {
                 }
                 .padding()
             }
-            .navigationTitle("IA Nutricional")
+            .navigationTitle("IA Nutricional REAL")
             .navigationBarTitleDisplayMode(.inline)
         }
         .sheet(isPresented: $showingImagePicker) {
@@ -338,21 +340,32 @@ struct FoodAnalysisView: View {
         } message: {
             Text("Para usar la cámara, necesitas habilitar el permiso en Configuración > Control de Glucosa > Cámara")
         }
+        .alert("Error de Análisis", isPresented: $showingErrorAlert) {
+            Button("OK", role: .cancel) { }
+            Button("Reintentar") {
+                analyzeFood()
+            }
+        } message: {
+            Text(errorMessage)
+        }
     }
     
-    // MARK: - Análisis con IA Food101
+    // MARK: - Análisis con IA REAL
     private func analyzeFood() {
         guard let image = selectedImage else { return }
         
         isAnalyzing = true
+        errorMessage = ""
         
         Task {
             do {
-                print("🧠 Iniciando análisis con IA Food101...")
+                print("🧠 Iniciando análisis REAL con IA Food101...")
                 let result = try await food101Classifier.classifyFood(image: image)
                 
                 DispatchQueue.main.async {
-                    print("✅ Análisis completado: \(result.foodName)")
+                    print("✅ Análisis REAL completado: \(result.foodName)")
+                    print("📊 Confianza: \(Int(result.confidence * 100))%")
+                    
                     self.analysisResult = result
                     self.isAnalyzing = false
                     self.showingResultSheet = true
@@ -360,13 +373,16 @@ struct FoodAnalysisView: View {
             } catch {
                 DispatchQueue.main.async {
                     self.isAnalyzing = false
-                    print("❌ Error en análisis Food101: \(error)")
+                    print("❌ Error en análisis REAL: \(error)")
                     
                     // Manejar errores específicos
                     if let food101Error = error as? Food101Error {
-                        print("Error específico: \(food101Error.localizedDescription)")
-                        // Aquí podrías mostrar una alerta al usuario
+                        self.errorMessage = food101Error.localizedDescription
+                    } else {
+                        self.errorMessage = "Error inesperado durante el análisis. Por favor, intenta de nuevo."
                     }
+                    
+                    self.showingErrorAlert = true
                 }
             }
         }
@@ -391,11 +407,12 @@ struct FoodAnalysisView: View {
     }
 }
 
-// MARK: - Componentes auxiliares
+// MARK: - Componentes auxiliares mejorados
 
 struct CapabilityBadge: View {
     let icon: String
     let text: String
+    let color: Color
     
     var body: some View {
         HStack(spacing: 6) {
@@ -407,13 +424,13 @@ struct CapabilityBadge: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
-        .background(Color.blue.opacity(0.1))
-        .foregroundColor(.blue)
+        .background(color.opacity(0.1))
+        .foregroundColor(color)
         .cornerRadius(8)
     }
 }
 
-// MARK: - Image Picker
+// MARK: - Image Picker (sin cambios)
 struct ImagePicker: UIViewControllerRepresentable {
     let sourceType: UIImagePickerController.SourceType
     let onImagePicked: (UIImage) -> Void
