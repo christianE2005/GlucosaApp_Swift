@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import SwiftUI
 
 class UserProfiles: ObservableObject {
     @Published var currentProfile: UserProfile?
@@ -28,6 +29,23 @@ class UserProfiles: ObservableObject {
     func setCurrentProfile(_ profile: UserProfile) {
         currentProfile = profile
         saveToUserDefaults()
+    }
+    
+    func resetProfile() {
+        currentProfile = nil
+        profiles.removeAll()
+        UserDefaults.standard.removeObject(forKey: "SavedProfiles")
+        UserDefaults.standard.removeObject(forKey: "CurrentProfile")
+    }
+    
+    func updateProfile(_ profile: UserProfile) {
+        if currentProfile == nil {
+            // If no profile exists, add it as the first profile
+            addProfile(profile)
+        } else {
+            // Update the current profile
+            updateCurrentProfile(profile)
+        }
     }
     
     private func saveToUserDefaults() {

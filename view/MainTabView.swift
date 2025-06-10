@@ -5,9 +5,10 @@ struct MainTabView: View {
     @StateObject private var meals = Meals()
     @StateObject private var userProfiles = UserProfiles()
     @StateObject private var appState = AppState()
+    @State private var selectedTab = 0
     
     var body: some View {
-        TabView {
+        TabView(selection: $selectedTab) {
             // Tab 1: Lista de Comidas
             MealsListTabView()
                 .tabItem {
@@ -17,6 +18,7 @@ struct MainTabView: View {
                 .environmentObject(meals)
                 .environmentObject(userProfiles)
                 .environmentObject(appState)
+                .tag(0)
             
             // Tab 2: Computer Vision con IA
             FoodAnalysisView()
@@ -27,6 +29,7 @@ struct MainTabView: View {
                 .environmentObject(meals)
                 .environmentObject(userProfiles)
                 .environmentObject(appState)
+                .tag(1)
             
             // Tab 3: Gráficas e Insights
             InsightsView()
@@ -37,6 +40,7 @@ struct MainTabView: View {
                 .environmentObject(meals)
                 .environmentObject(userProfiles)
                 .environmentObject(appState)
+                .tag(2)
             
             // Tab 4: Perfil de Usuario
             UserProfileTabView()
@@ -47,10 +51,12 @@ struct MainTabView: View {
                 .environmentObject(meals)
                 .environmentObject(userProfiles)
                 .environmentObject(appState)
+                .tag(3)
         }
         .accentColor(.blue)
         .onAppear {
             setupTabBarAppearance()
+            setupNotificationObserver()
         }
     }
     
@@ -77,11 +83,26 @@ struct MainTabView: View {
             UITabBar.appearance().scrollEdgeAppearance = appearance
         }
     }
+    
+    // MARK: - Configuración de observer para navegación automática a gráficas IA
+    private func setupNotificationObserver() {
+        NotificationCenter.default.addObserver(
+            forName: .navigateToInsights,
+            object: nil,
+            queue: .main
+        ) { _ in
+            // Cambiar a la tab de Insights con animación
+            withAnimation(.easeInOut(duration: 0.5)) {
+                selectedTab = 2
+            }
+        }
+    }
 }
 
 // MARK: - Tab Views
 
 struct MealsListTabView: View {
+    @EnvironmentObject var meals: Meals
     @EnvironmentObject var userProfiles: UserProfiles
     @State private var showingAddMeal = false
     
@@ -307,73 +328,6 @@ struct MealRowView: View {
         case 100...140: return .orange
         default: return .red
         }
-    }
-}
-
-struct AddMealView: View {
-    @EnvironmentObject var meals: Meals
-    @Environment(\.presentationMode) var presentationMode
-    
-    @State private var mealName = ""
-    @State private var selectedType: MealType = .breakfast
-    @State private var carbs = ""
-    @State private var glucose = ""
-    
-    var body: some View {
-        NavigationView {
-            Form {
-                Section(header: Text("Información Básica")) {
-                    TextField("Nombre de la comida", text: $mealName)
-                    
-                    Picker("Tipo de comida", selection: $selectedType) {
-                        ForEach([MealType.breakfast, .lunch, .dinner, .snack], id: \.self) { type in
-                            Text(type.displayName).tag(type)
-                        }
-                    }
-                    .pickerStyle(SegmentedPickerStyle())
-                }
-                
-                Section(header: Text("Información Nutricional (Opcional)")) {
-                    TextField("Carbohidratos (g)", text: $carbs)
-                        .keyboardType(.decimalPad)
-                    
-                    TextField("Nivel de glucosa (mg/dL)", text: $glucose)
-                        .keyboardType(.decimalPad)
-                }
-            }
-            .navigationTitle("Nueva Comida")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancelar") {
-                        presentationMode.wrappedValue.dismiss()
-                    }
-                }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Guardar") {
-                        saveMeal()
-                    }
-                    .disabled(mealName.isEmpty)
-                }
-            }
-        }
-    }
-    
-    private func saveMeal() {
-        let newMeal = Meal(
-            name: mealName,
-            type: selectedType,
-            portions: [],
-            timestamp: Date(),
-            totalCarbs: Double(carbs),
-            glucoseLevel: Double(glucose),
-            date: Date(),
-            isAIAnalyzed: false
-        )
-        
-        meals.addMeal(newMeal)
-        presentationMode.wrappedValue.dismiss()
     }
 }
 

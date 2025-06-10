@@ -1,7 +1,7 @@
-import UIKit
 import CoreML
 import Vision
 import Foundation
+import SwiftUI
 
 // MARK: - Servicio de Clasificación Food101 CORREGIDO
 class Food101ClassificationService: ObservableObject {
@@ -81,7 +81,7 @@ class Food101ClassificationService: ObservableObject {
         
         // Analizar inputs
         var inputShape: [Int]? = nil
-        var requiresNormalization = true
+        let requiresNormalization = true
         
         for (inputName, inputDesc) in description.inputDescriptionsByName {
             print("   📥 Input '\(inputName)':")

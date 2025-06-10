@@ -60,28 +60,28 @@ struct ProfileView: View {
                         .frame(width: 100, height: 100)
                         .shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
                     
-                    Text(userProfiles.currentProfile.name.prefix(1).uppercased())
+                    Text((userProfiles.currentProfile?.name ?? "U").prefix(1).uppercased())
                         .font(.system(size: 40, weight: .bold))
                         .foregroundColor(.white)
                 }
                 
                 VStack(spacing: 4) {
-                    Text(userProfiles.currentProfile.name.isEmpty ? "Usuario" : userProfiles.currentProfile.name)
+                    Text(userProfiles.currentProfile?.name.isEmpty == false ? userProfiles.currentProfile?.name ?? "Usuario" : "Usuario")
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(.primary)
                     
-                    if userProfiles.currentProfile.age > 0 {
-                        Text("\(userProfiles.currentProfile.age) años")
+                    if let age = userProfiles.currentProfile?.age, age > 0 {
+                        Text("\(age) años")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
                     
-                    if !userProfiles.currentProfile.diabetesType.isEmpty {
+                    if let diabetesType = userProfiles.currentProfile?.diabetesType, !diabetesType.isEmpty {
                         HStack(spacing: 6) {
                             Image(systemName: "heart.text.square")
                                 .foregroundColor(.red)
-                            Text(userProfiles.currentProfile.diabetesType)
+                            Text(diabetesType)
                                 .font(.subheadline)
                                 .foregroundColor(.red)
                         }
@@ -171,7 +171,7 @@ struct ProfileView: View {
                 SettingsRow(
                     icon: "bell.fill",
                     title: "Notificaciones",
-                    subtitle: userProfiles.currentProfile.notificationsEnabled ? "Activadas" : "Desactivadas",
+                    subtitle: (userProfiles.currentProfile?.notificationsEnabled ?? false) ? "Activadas" : "Desactivadas",
                     color: .orange
                 ) {
                     // Acción para notificaciones
@@ -182,7 +182,7 @@ struct ProfileView: View {
                 SettingsRow(
                     icon: "chart.bar.fill",
                     title: "Unidades",
-                    subtitle: userProfiles.currentProfile.preferredUnits,
+                    subtitle: userProfiles.currentProfile?.preferredUnits ?? "mg/dL",
                     color: .green
                 ) {
                     // Acción para unidades
@@ -204,7 +204,7 @@ struct ProfileView: View {
                 SettingsRow(
                     icon: "globe",
                     title: "Idioma",
-                    subtitle: userProfiles.currentProfile.preferredLanguage,
+                    subtitle: userProfiles.currentProfile?.preferredLanguage ?? "Español",
                     color: .blue
                 ) {
                     // Acción para idioma

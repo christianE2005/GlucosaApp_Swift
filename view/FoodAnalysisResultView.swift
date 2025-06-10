@@ -58,15 +58,16 @@ struct FoodAnalysisResultView: View {
                 }
             }
             .alert("¡Guardado Exitosamente!", isPresented: $showingSaveConfirmation) {
-                Button("Ver Historial") {
+                Button("Ver Gráficas IA") {
                     onDismiss()
-                    // Aquí podrías navegar a la tab de historial
+                    // Notificar que se debe navegar a la tab de Insights
+                    NotificationCenter.default.post(name: .navigateToInsights, object: nil)
                 }
                 Button("Analizar Otra") {
                     onDismiss()
                 }
             } message: {
-                Text("El análisis nutricional ha sido agregado a tu historial de comidas con todos los insights de IA.")
+                Text("🧠 ¡Análisis IA agregado! Los datos nutricionales ya están disponibles en tus gráficas e insights.")
             }
         }
     }
@@ -101,6 +102,10 @@ struct FoodAnalysisResultView: View {
         )
         
         meals.addMeal(meal)
+        
+        // 🚨 Notificar que se agregaron nuevos datos de IA
+        NotificationCenter.default.post(name: .newAIDataAdded, object: nil)
+        
         showingSaveConfirmation = true
     }
     
@@ -137,7 +142,7 @@ struct FoodAnalysisResultView: View {
         
         🤖 Confianza IA: \(Int(result.confidence * 100))%
         
-        Generado por Control de Glucosa App con MobileNetV2
+        Generado por Gluco Log con MobileNetV2
         """
         
         let activityViewController = UIActivityViewController(

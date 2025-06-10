@@ -1,5 +1,9 @@
 import SwiftUI
 
+#if canImport(UIKit)
+import UIKit
+#endif
+
 struct UserSetupView: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var userProfiles: UserProfiles
@@ -60,7 +64,7 @@ struct UserSetupView: View {
             }
         }
         .background(Color.white)
-        .navigationBarHidden(true)
+        .navigationBarBackButtonHidden(true)
         // NUEVO: Toolbar para campos numéricos
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
@@ -123,7 +127,6 @@ struct UserSetupView: View {
                         .foregroundColor(.black)
                         .padding(.vertical, 16)
                         .background(Color.clear)
-                        .textInputAutocapitalization(.words)
                         .autocorrectionDisabled()
                         .overlay(
                             Rectangle()
@@ -148,7 +151,7 @@ struct UserSetupView: View {
                                 .foregroundColor(ageFieldFocused ? Color.blue : Color.gray.opacity(0.4)),
                             alignment: .bottom
                         )
-                        .onChange(of: age) { newValue in
+                        .onChange(of: age) { _, newValue in
                             // Filtrar solo números y limitar a 3 dígitos
                             let filtered = newValue.filter { $0.isNumber }
                             if filtered.count <= 3 {
@@ -228,7 +231,7 @@ struct UserSetupView: View {
                                 .foregroundColor(yearFieldFocused ? Color.blue : Color.gray.opacity(0.4)),
                             alignment: .bottom
                         )
-                        .onChange(of: diagnosisYear) { newValue in
+                        .onChange(of: diagnosisYear) { _, newValue in
                             // Filtrar solo números y limitar a 4 dígitos (año)
                             let filtered = newValue.filter { $0.isNumber }
                             if filtered.count <= 4 {
@@ -356,7 +359,9 @@ struct UserSetupView: View {
     private func hideKeyboard() {
         ageFieldFocused = false
         yearFieldFocused = false
+        #if canImport(UIKit)
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        #endif
     }
     
     // MARK: - Guardar perfil

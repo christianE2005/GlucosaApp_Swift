@@ -12,13 +12,13 @@ struct ContentView: View {
         NavigationView {
             VStack {
                 // Header con información del usuario
-                if !userProfiles.currentProfile.name.isEmpty {
+                if let currentProfile = userProfiles.currentProfile, !currentProfile.name.isEmpty {
                     VStack(alignment: .leading) {
-                        Text("Hola, \(userProfiles.currentProfile.name)")
+                        Text("Hola, \(currentProfile.name)")
                             .font(.title2)
                             .foregroundColor(.primary)
                         
-                        Text("Control de Glucosa")
+                        Text("Gluco Log")
                             .font(.subheadline)
                             .foregroundColor(Color.gray)
                     }
@@ -73,7 +73,7 @@ struct ContentView: View {
                 .padding()
                 .accessibilityLabel("Agregar nueva comida")
             }
-            .navigationTitle("Control de Glucosa")
+            .navigationTitle("Gluco Log")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -109,7 +109,9 @@ struct ContentView: View {
     private func deleteMeals(offsets: IndexSet) {
         let sortedMeals = meals.meals.sorted(by: { $0.date > $1.date })
         for index in offsets {
-            meals.deleteMeal(sortedMeals[index])
+            if let mealToDelete = sortedMeals.indices.contains(index) ? sortedMeals[index] : nil {
+                meals.removeMeal(withId: mealToDelete.id)
+            }
         }
     }
     

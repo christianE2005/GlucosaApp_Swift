@@ -52,7 +52,7 @@ struct WelcomeView: View {
                     
                     // Texto principal
                     VStack(spacing: 16) {
-                        Text("Control de Glucosa")
+                        Text("Gluco Log")
                             .font(.system(size: 32, weight: .bold, design: .rounded))
                             .foregroundColor(.black)
                             .opacity(textAnimation ? 1.0 : 0.0)

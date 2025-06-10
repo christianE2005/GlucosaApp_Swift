@@ -1,7 +1,8 @@
 import SwiftUI
 
+
 @main
-struct ControlGlucosaApp: App {
+struct GlucoLogApp: App {
     @StateObject private var meals = Meals()
     @StateObject private var userProfiles = UserProfiles()
     @StateObject private var appState = AppState()

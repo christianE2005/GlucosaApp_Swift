@@ -1,6 +1,6 @@
 //
 //  portion.swift
-//  ControlGlucosa
+//  GlucoLog
 //
 //  Created by Alumno on 07/06/25.
 //
