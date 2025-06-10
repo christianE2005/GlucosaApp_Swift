@@ -1,6 +1,6 @@
 //
-//  ControlGlucosaApp.swift
-//  ControlGlucosa
+//  userprofilesApp.swift
+//  userprofiles
 //
 //  Created by Alumno on 07/06/25.
 //
@@ -8,7 +8,7 @@
 import SwiftUI
 
 @main
-struct ControlGlucosaApp: App {
+struct userprofilesApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
