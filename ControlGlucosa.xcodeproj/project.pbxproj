@@ -10,9 +10,27 @@
 		FBD1D8CC2DF4CB64008136BF /* ControlGlucosa.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ControlGlucosa.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		FB416FA72DF5A6BE00580518 /* Exceptions for "ControlGlucosa" folder in "ControlGlucosa" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"/Localized: Target",
+			);
+			target = FBD1D8CB2DF4CB64008136BF /* ControlGlucosa */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		FBA972D82DF5126700950E80 /* userprofiles */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = userprofiles;
+			sourceTree = "<group>";
+		};
 		FBD1D8CE2DF4CB64008136BF /* ControlGlucosa */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				FB416FA72DF5A6BE00580518 /* Exceptions for "ControlGlucosa" folder in "ControlGlucosa" target */,
+			);
 			path = ControlGlucosa;
 			sourceTree = "<group>";
 		};
@@ -33,6 +51,7 @@
 			isa = PBXGroup;
 			children = (
 				FBD1D8CE2DF4CB64008136BF /* ControlGlucosa */,
+				FBA972D82DF5126700950E80 /* userprofiles */,
 				FBD1D8CD2DF4CB64008136BF /* Products */,
 			);
 			sourceTree = "<group>";
@@ -252,8 +271,14 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"ControlGlucosa/Preview Content\"";
+				DEVELOPMENT_TEAM = N2TLVFPKL4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "";
+				INFOPLIST_KEY_CFBundleDisplayName = "Gluco Log";
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Gluco Log necesita acceso a la cámara para analizar alimentos.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Gluco Log necesita acceso a la galería de fotos para analizar imágenes de alimentos.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -264,7 +289,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "data-insights.ControlGlucosa";
+				PRODUCT_BUNDLE_IDENTIFIER = com.arnoldo.glucosa.test2024;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -280,8 +305,14 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"ControlGlucosa/Preview Content\"";
+				DEVELOPMENT_TEAM = N2TLVFPKL4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "";
+				INFOPLIST_KEY_CFBundleDisplayName = "Gluco Log";
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Gluco Log necesita acceso a la cámara para analizar alimentos.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Gluco Log necesita acceso a la galería de fotos para analizar imágenes de alimentos.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -292,7 +323,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "data-insights.ControlGlucosa";
+				PRODUCT_BUNDLE_IDENTIFIER = com.arnoldo.glucosa.test2024;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
