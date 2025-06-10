@@ -79,7 +79,7 @@ struct FoodAnalysisResultView: View {
         )
         
         let meal = Meal(
-            name: "🧠 \(result.foodName)",  // Emoji para indicar análisis IA
+            name: "🧠 \(result.foodName)",
             type: selectedMealType,
             portions: ["Análisis IA: \(Int(portionSize))g"],
             timestamp: Date(),
@@ -87,7 +87,17 @@ struct FoodAnalysisResultView: View {
             glucoseReadingAfter: nil,
             totalCarbs: adjustedNutrition.carbohydrates,
             glucoseLevel: nil,
-            date: Date()
+            date: Date(),
+            // ✨ NUEVOS: Datos nutricionales completos
+            calories: adjustedNutrition.calories,
+            proteins: adjustedNutrition.proteins,
+            fats: adjustedNutrition.fats,
+            fiber: adjustedNutrition.fiber,
+            sugars: adjustedNutrition.sugars,
+            sodium: adjustedNutrition.sodium,
+            glycemicIndex: adjustedNutrition.glycemicIndex,
+            portionSizeGrams: portionSize,
+            isAIAnalyzed: true
         )
         
         meals.addMeal(meal)

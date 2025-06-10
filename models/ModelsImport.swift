@@ -1,37 +1,41 @@
-//
-//  ModelsImport.swift
-//  ControlGlucosa
-//
-//  Archivo para asegurar que todos los modelos estén disponibles
-//
-
-import Foundation
-import SwiftUI
-import Combine
-
-// Re-exportar todos los tipos principales para asegurar disponibilidad
+// MARK: - GlycemicIndex.swift
+// Archivo: GlycemicIndex.swift
 /*
-public typealias AppMeal = Meal
-public typealias AppMealType = MealType
-public typealias AppIngredient = Ingredient
-public typealias AppPortion = Portion
-public typealias AppGlucoseReading = GlucoseReading
+import Foundation
+
+enum GlycemicIndex: String, CaseIterable, Codable, Identifiable {
+    case low = "Bajo"
+    case medium = "Medio"
+    case high = "Alto"
+    
+    var id: String { rawValue }
+    
+    var displayName: String {
+        return rawValue
+    }
+    
+    var numericRange: String {
+        switch self {
+        case .low: return "≤ 55"
+        case .medium: return "56-69"
+        case .high: return "≥ 70"
+        }
+    }
+    
+    var colorName: String {
+        switch self {
+        case .low: return "green"
+        case .medium: return "orange"
+        case .high: return "red"
+        }
+    }
+    
+    var description: String {
+        switch self {
+        case .low: return "Absorción lenta de glucosa"
+        case .medium: return "Absorción moderada de glucosa"
+        case .high: return "Absorción rápida de glucosa"
+        }
+    }
+}
 */
-// Extensión para verificar que los tipos estén disponibles
-extension Meal {
-    static func verify() -> Bool {
-        return true
-    }
-}
-
-extension MealType {
-    static func verify() -> Bool {
-        return true
-    }
-}
-
-// Función global para debugging si es necesario
-func debugModelAvailability() {
-    print("✅ Meal type available: \(Meal.verify())")
-    print("✅ MealType enum available: \(MealType.verify())")
-}
